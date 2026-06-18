@@ -1,36 +1,53 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Avloniy
 
-## Getting Started
+Online kurslar sotish platformasi — kurslar Instagram Reels uslubidagi qisqa videolar orqali
+reklama qilinadi. **Mobile-first** (telefon ekraniga moslangan).
 
-First, run the development server:
+> Bu **demo** versiya — bazasiz ishlaydi. Barcha ma'lumotlar kodга o'rnatilgan (in-memory),
+> shuning uchun hech qanday sozlash yoki ma'lumotlar bazasi kerak emas. Vercel'ga to'g'ridan-to'g'ri
+> deploy qilinadi. Like / sotib olish / progress vizual ishlaydi, lekin server qayta yuklanганда
+> dastlabki holatга qaytadi.
 
+## Texnologiyalar
+- Next.js 16 (App Router) + TypeScript
+- Tailwind CSS v4
+- Zustand, Zod, lucide-react, recharts
+
+## Lokal ishga tushirish
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Demo akkauntlar (parol: `parol123`)
+| Rol | Email |
+|-----|-------|
+| Xaridor | `ali@misol.uz` |
+| Sotuvchi | `aziz@misol.uz`, `dilnoza@misol.uz`, `sardor@misol.uz` |
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Yangi akkaunt ham yaratishingiz mumkin (ro'yxatdan o'tish — vaqtinchalik saqlanadi).
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Vercel'ga deploy
+Hech qanday muhit o'zgaruvchisi (env) **kerak emas**.
+1. Loyihani GitHub'ga yuklang (yoki `vercel` CLI ishlating).
+2. Vercel'да "New Project" → repozitoriyani tanlang → **Deploy**.
+3. Tamom — Vercel Next.js'ni avtomatik aniqlaydi va quradi.
 
-## Learn More
+CLI orqali:
+```bash
+npm i -g vercel
+vercel        # preview
+vercel --prod # production
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Imkoniyatlar
+- **Xaridor:** Reels lentasi (swipe, autoplay), like / izoh / ulashish / saqlash, kurs sahifasi,
+  mock to'lov, "Mening kurslarim", dars progressi, kviz, sertifikat (PDF), streak 🔥, wishlist.
+- **Sotuvchi:** onboarding, kurs/dars/reel yaratish, kvizlar, Instagram-uslubidagi profil,
+  statistik dashboard (recharts grafiklar).
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Eslatma
+Bu demo. Doimiy ma'lumotlar saqlash uchun `src/lib/demo/store.ts` ni real bazaга (masalan
+Postgres + Prisma) ulash mumkin — funksiya imzolari o'zgarmaydi. `prisma/schema.prisma` to'liq
+ma'lumotlar modeli sifatida saqlanган (kelajakда foydalanish uchun).

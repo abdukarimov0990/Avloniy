@@ -6,11 +6,18 @@ Online kurslar sotish platformasi. Kurslar Instagram Reels uslubidagi qisqa vert
 videolar orqali reklama qilinadi. Ikki rol: **Buyer** (xaridor) va **Seller** (sotuvchi).
 **Mobile-first** (~430px shell). Interfeys o'zbekcha, kod inglizcha.
 
+## ⚠️ DEMO REJIMI (bazasiz)
+Loyiha **bazasiz demo**ga o'tkazildi (Vercel'ga sozlashsiz deploy uchun). Prisma/Postgres/JWT/bcrypt
+**olib tashlangan**. Barcha ma'lumotlar `src/lib/demo/data.ts` da (statik) va `src/lib/demo/store.ts`
+da (in-memory mutable, `globalThis` singleton). Yozuvlar server qayta yuklanганда reset bo'ladi.
+Real bazaga qaytish uchun store funksiyalarini Prisma'ga ulash kifoya (imzolar bir xil).
+`prisma/schema.prisma` to'liq model sifatida saqlangan (ishlatilmaydi).
+
 ## Stack
 - Next.js 16 (App Router, Turbopack) + TypeScript
 - Tailwind CSS v4 (tokenlar `src/app/globals.css` `@theme` ichida)
-- Prisma 6 + PostgreSQL (Neon)
-- Auth: o'z JWT (`jose`) + httpOnly cookie, `bcryptjs`, rolega asoslangan `src/proxy.ts`
+- **Ma'lumot:** in-memory demo store (`src/lib/demo/`) — baza yo'q, env yo'q
+- Auth: oddiy httpOnly cookie (`avloniy_session` = `userId|role`), rolega asoslangan `src/proxy.ts`
 - Zustand (klient state), zod (validatsiya), lucide-react (ikonkalar), recharts (grafiklar)
 
 ## Dizayn tizimi
@@ -18,25 +25,19 @@ Ranglar `globals.css`da: `background`/`surface` (light black), `accent` (orange 
 `foreground`/`muted`/`subtle`, `border`. Doimo dark mavzu. UI primitivlar: `src/components/ui/`.
 
 ## Muhim konvensiyalar
-- `src/lib/jwt.ts` — Edge-safe (faqat jose). `src/proxy.ts` faqat shuni import qiladi.
-- `src/lib/auth.ts` — Node-only (`server-only`): bcrypt, cookie, DB. Sahifa/route'lar shu yerdan.
+- `src/lib/demo/store.ts` — barcha biznes-logika va ma'lumot (server-only). `src/lib/*.ts`
+  (reels/courses/seller/progress/...) shu store'ga yupqa re-export shim'lar.
+- `src/lib/auth.ts` — cookie sessiya (`server-only`). `src/proxy.ts` cookie'ni inline parse qiladi (Edge).
 - Narx butun so'mda saqlanadi (tiyin emas). `formatPrice` — `src/lib/utils.ts`.
 - npm root-cache muammosi tufayli mahalliy cache: `.npmrc` `cache=./.npm-cache`.
 
-## Baza
-Hozir **lokal PostgreSQL 16** (Homebrew, `brew services` orqali ishlaydi) ishlatiladi.
-`.env` → `DATABASE_URL="postgresql://abdukarimov@localhost:5432/avloniy?schema=public"`.
-Sxema `prisma db push` bilan yuklangan. Prodda Neon'ga o'tish uchun `.env` dagi izohli qatorga qarang.
-
-## Sozlash (yangi muhitda)
-1. `brew services start postgresql@16 && createdb avloniy` (yoki `.env` ni Neon'ga yo'naltiring).
-2. `npx prisma db push` — sxemani yuklaydi.
-3. `npm run dev` — http://localhost:3000
+## Ishga tushirish / deploy
+- Lokal: `npm install && npm run dev` → http://localhost:3000 (env kerak emas).
+- Vercel: repo'ni import qiling → Deploy. Hech qanday env o'zgaruvchisi kerak emas.
+- Demo login: `ali@misol.uz` (xaridor), `aziz@misol.uz` (sotuvchi), parol `parol123`.
 
 ## Buyruqlar
-- `npm run dev` / `npm run build` / `npm run lint`
-- `npx prisma studio` — bazani ko'rish
-- `npx prisma db push` — sxema o'zgarishini yuklash
+- `npm run dev` / `npm run build` / `npm run start` / `npm run lint`
 
 ## Reels / kurslar
 - Standart reel video: `public/videos/default.mp4` (konstanta `src/lib/constants.ts`).
