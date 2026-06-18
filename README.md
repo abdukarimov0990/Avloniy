@@ -3,10 +3,10 @@
 Online kurslar sotish platformasi — kurslar Instagram Reels uslubidagi qisqa videolar orqali
 reklama qilinadi. **Mobile-first** (telefon ekraniga moslangan).
 
-> Bu **demo** versiya — bazasiz ishlaydi. Barcha ma'lumotlar kodга o'rnatilgan (in-memory),
-> shuning uchun hech qanday sozlash yoki ma'lumotlar bazasi kerak emas. Vercel'ga to'g'ridan-to'g'ri
-> deploy qilinadi. Like / sotib olish / progress vizual ishlaydi, lekin server qayta yuklanганда
-> dastlabki holatга qaytadi.
+> Bu **demo** versiya — bazasiz ishlaydi. Barcha ma'lumotlar brauzeringizning **localStorage**'ida
+> saqlanadi, shuning uchun hech qanday baza yoki muhit sozlamasi kerak emas. Vercel'ga
+> to'g'ridan-to'g'ri deploy qilinadi. Like / sotib olish / progress / yangi kurs — barchasi
+> saqlanadi va sahifani yangilaganда ham yo'qolmaydi. (Tozalash: brauzer localStorage'ini o'chiring.)
 
 ## Texnologiyalar
 - Next.js 16 (App Router) + TypeScript
@@ -47,7 +47,8 @@ vercel --prod # production
 - **Sotuvchi:** onboarding, kurs/dars/reel yaratish, kvizlar, Instagram-uslubidagi profil,
   statistik dashboard (recharts grafiklar).
 
-## Eslatma
-Bu demo. Doimiy ma'lumotlar saqlash uchun `src/lib/demo/store.ts` ni real bazaга (masalan
-Postgres + Prisma) ulash mumkin — funksiya imzolari o'zgarmaydi. `prisma/schema.prisma` to'liq
-ma'lumotlar modeli sifatida saqlanган (kelajakда foydalanish uchun).
+## Arxitektura
+To'liq client-side: ma'lumot `src/lib/demo/` (statik seed + Zustand/localStorage store).
+Server qatlami yo'q. Bir nechta foydalanuvchi o'rtasida real, doimiy saqlash kerak bo'lsa,
+store amallarini (`src/lib/demo/use-demo.ts`) backend API'ga ulash mumkin.
+`prisma/schema.prisma` to'liq ma'lumotlar modeli sifatida reference uchun saqlangan.

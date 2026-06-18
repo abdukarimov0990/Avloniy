@@ -6,29 +6,36 @@ Online kurslar sotish platformasi. Kurslar Instagram Reels uslubidagi qisqa vert
 videolar orqali reklama qilinadi. Ikki rol: **Buyer** (xaridor) va **Seller** (sotuvchi).
 **Mobile-first** (~430px shell). Interfeys o'zbekcha, kod inglizcha.
 
-## ⚠️ DEMO REJIMI (bazasiz)
-Loyiha **bazasiz demo**ga o'tkazildi (Vercel'ga sozlashsiz deploy uchun). Prisma/Postgres/JWT/bcrypt
-**olib tashlangan**. Barcha ma'lumotlar `src/lib/demo/data.ts` da (statik) va `src/lib/demo/store.ts`
-da (in-memory mutable, `globalThis` singleton). Yozuvlar server qayta yuklanганда reset bo'ladi.
-Real bazaga qaytish uchun store funksiyalarini Prisma'ga ulash kifoya (imzolar bir xil).
-`prisma/schema.prisma` to'liq model sifatida saqlangan (ishlatilmaydi).
+## ⚠️ DEMO REJIMI (bazasiz, to'liq client-side + localStorage)
+Loyiha **bazasiz client-side demo**. Server qatlami YO'Q (API route, Prisma, cookie auth,
+proxy — hammasi olib tashlangan). Butun ma'lumot oqimi brauzerда:
+- `src/lib/demo/data.ts` — statik seed (foydalanuvchilar, kurslar, darslar, reels, kvizlar).
+- `src/lib/demo/state.ts` — SOF holat tuzilmasi + selektorlar (read).
+- `src/lib/demo/use-demo.ts` — **Zustand + persist(localStorage)** store + barcha amallar (write).
+  Kalit: `avloniy-demo`. Like/sotib olish/progress/yangi kurs — hammasi localStorage'да saqlanadi.
+- `src/components/demo-provider.tsx` — root layout'да; localStorage'дан `rehydrate` qiladi va
+  shu paytgача splash ko'rsatadi (SSR↔client hydration mismatch'ни oldini oladi).
+- `src/lib/demo/hooks.ts` — `useGuard(role?)` client route himoyasi (redirect).
+
+Sahifa/komponentlar **client** (`"use client"`); holatni `useDemo()` (to'liq holat) orqali o'qib,
+selektorlar bilan hisoblaydi, amallar uchun store action'larini chaqiradi.
+`prisma/schema.prisma` faqat reference (ishlatilmaydi).
 
 ## Stack
-- Next.js 16 (App Router, Turbopack) + TypeScript
+- Next.js 16 (App Router) + TypeScript — sahifalar statik shell, client'да hidratlanadi
 - Tailwind CSS v4 (tokenlar `src/app/globals.css` `@theme` ichida)
-- **Ma'lumot:** in-memory demo store (`src/lib/demo/`) — baza yo'q, env yo'q
-- Auth: oddiy httpOnly cookie (`avloniy_session` = `userId|role`), rolega asoslangan `src/proxy.ts`
-- Zustand (klient state), zod (validatsiya), lucide-react (ikonkalar), recharts (grafiklar)
+- **Ma'lumot:** Zustand + localStorage (`src/lib/demo/`) — baza yo'q, server yo'q, env yo'q
+- zod ishlatilmaydi (validatsiya inline); lucide-react (ikonkalar), recharts (grafiklar)
 
 ## Dizayn tizimi
 Ranglar `globals.css`da: `background`/`surface` (light black), `accent` (orange `#FF6B35`),
 `foreground`/`muted`/`subtle`, `border`. Doimo dark mavzu. UI primitivlar: `src/components/ui/`.
 
 ## Muhim konvensiyalar
-- `src/lib/demo/store.ts` — barcha biznes-logika va ma'lumot (server-only). `src/lib/*.ts`
-  (reels/courses/seller/progress/...) shu store'ga yupqa re-export shim'lar.
-- `src/lib/auth.ts` — cookie sessiya (`server-only`). `src/proxy.ts` cookie'ni inline parse qiladi (Edge).
-- Narx butun so'mda saqlanadi (tiyin emas). `formatPrice` — `src/lib/utils.ts`.
+- Yangi selektor/amal qo'shsangiz: read → `state.ts`, write → `use-demo.ts` action.
+- `useDemo()`ни SELEKTORSIZ chaqiring (to'liq holat) — selektor yangi obyekt qaytarsa Zustand v5 loop beradi.
+- localStorage faqat array/obyekt saqlaydi (Set EMAS) — shuning uchun `likes/saves/wishlist` array.
+- Narx butun so'mda. `formatPrice` — `src/lib/utils.ts`.
 - npm root-cache muammosi tufayli mahalliy cache: `.npmrc` `cache=./.npm-cache`.
 
 ## Ishga tushirish / deploy
