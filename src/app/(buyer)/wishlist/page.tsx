@@ -1,15 +1,17 @@
+"use client";
+
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { ArrowLeft, Heart, ChevronRight } from "lucide-react";
-import { getCurrentUser } from "@/lib/auth";
-import { getWishlist } from "@/lib/courses";
+import { useDemo } from "@/lib/demo/use-demo";
+import { currentUser, selectWishlist } from "@/lib/demo/state";
 import { formatPrice } from "@/lib/utils";
 
-export default async function WishlistPage() {
-  const user = await getCurrentUser();
-  if (!user) redirect("/login");
+export default function WishlistPage() {
+  const st = useDemo();
+  const user = currentUser(st);
+  if (!user) return null;
 
-  const courses = await getWishlist(user.id);
+  const courses = selectWishlist(st, user.id);
 
   return (
     <div className="h-full overflow-y-auto px-5 pb-6">

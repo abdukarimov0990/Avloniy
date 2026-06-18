@@ -1,68 +1,30 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { X, Send, Loader2 } from "lucide-react";
-import type { FeedComment, FeedReel } from "@/types";
+import { useState } from "react";
+import { X, Send } from "lucide-react";
+import { useDemo } from "@/lib/demo/use-demo";
+import { selectReelComments } from "@/lib/demo/state";
+import type { FeedReel } from "@/types";
 
 export function CommentsSheet({
   reel,
   onClose,
-  onAdded,
 }: {
   reel: FeedReel | null;
   onClose: () => void;
-  onAdded: (reelId: string) => void;
 }) {
-  const [comments, setComments] = useState<FeedComment[]>([]);
-  const [loading, setLoading] = useState(false);
+  const st = useDemo();
+  const addComment = useDemo((s) => s.addComment);
   const [text, setText] = useState("");
-  const [sending, setSending] = useState(false);
 
   const open = reel !== null;
+  const comments = reel ? selectReelComments(st, reel.id) : [];
 
-  useEffect(() => {
-    if (!reel) return;
-    let cancelled = false;
-
-    const load = async () => {
-      setLoading(true);
-      setComments([]);
-      try {
-        const res = await fetch(`/api/reels/${reel.id}/comments`);
-        const data = await res.json();
-        if (!cancelled) setComments(data.comments ?? []);
-      } catch {
-        if (!cancelled) setComments([]);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    };
-
-    load();
-    return () => {
-      cancelled = true;
-    };
-  }, [reel]);
-
-  async function handleSend(e: React.FormEvent) {
+  function handleSend(e: React.FormEvent) {
     e.preventDefault();
-    if (!reel || !text.trim() || sending) return;
-    setSending(true);
-    try {
-      const res = await fetch(`/api/reels/${reel.id}/comments`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: text.trim() }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setComments((prev) => [data.comment, ...prev]);
-        onAdded(reel.id);
-        setText("");
-      }
-    } finally {
-      setSending(false);
-    }
+    if (!reel || !text.trim()) return;
+    addComment(reel.id, text.trim());
+    setText("");
   }
 
   return (
@@ -91,11 +53,7 @@ export function CommentsSheet({
         </div>
 
         <div className="flex-1 space-y-4 overflow-y-auto px-4 py-4">
-          {loading ? (
-            <div className="flex justify-center py-8 text-muted">
-              <Loader2 className="animate-spin" />
-            </div>
-          ) : comments.length === 0 ? (
+          {comments.length === 0 ? (
             <p className="py-8 text-center text-sm text-subtle">
               Hali izoh yo&apos;q. Birinchi bo&apos;ling!
             </p>
@@ -115,9 +73,7 @@ export function CommentsSheet({
                   </span>
                 )}
                 <div>
-                  <p className="text-xs font-semibold text-foreground">
-                    {c.user.name}
-                  </p>
+                  <p className="text-xs font-semibold text-foreground">{c.user.name}</p>
                   <p className="text-sm text-muted">{c.text}</p>
                 </div>
               </div>
@@ -137,10 +93,10 @@ export function CommentsSheet({
           />
           <button
             type="submit"
-            disabled={!text.trim() || sending}
+            disabled={!text.trim()}
             className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-accent text-white disabled:opacity-40"
           >
-            {sending ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
+            <Send size={18} />
           </button>
         </form>
       </div>

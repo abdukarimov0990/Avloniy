@@ -1,19 +1,11 @@
-import { redirect } from "next/navigation";
-import { getCurrentUser } from "@/lib/auth";
+"use client";
+
+import { useGuard } from "@/lib/demo/hooks";
 import { BuyerNav } from "@/components/layout/buyer-nav";
 
-/**
- * Buyer hududi uchun umumiy karkas: telefon kengligidagi shell + pastki navigatsiya.
- * Balandlik aniq (h-dvh) — Reels lentasidagi snap-scroll to'g'ri ishlashi uchun.
- */
-export default async function BuyerLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const user = await getCurrentUser();
-  if (!user) redirect("/login");
-  if (user.role !== "BUYER") redirect("/dashboard");
+export default function BuyerLayout({ children }: { children: React.ReactNode }) {
+  const { user } = useGuard("BUYER");
+  if (!user) return null;
 
   return (
     <div className="mx-auto flex h-dvh w-full max-w-[var(--width-shell)] flex-col bg-background sm:border-x sm:border-border">

@@ -1,4 +1,5 @@
-import { redirect } from "next/navigation";
+"use client";
+
 import {
   Wallet,
   ShoppingBag,
@@ -8,8 +9,8 @@ import {
   Clapperboard,
   TrendingUp,
 } from "lucide-react";
-import { getCurrentUser } from "@/lib/auth";
-import { getSellerStats } from "@/lib/seller";
+import { useDemo } from "@/lib/demo/use-demo";
+import { currentUser, selectSellerStats } from "@/lib/demo/state";
 import { Logo } from "@/components/brand/logo";
 import { LogoutButton } from "@/components/auth/logout-button";
 import { RevenueChart } from "@/components/seller/revenue-chart";
@@ -45,11 +46,12 @@ function StatCard({
   );
 }
 
-export default async function DashboardPage() {
-  const user = await getCurrentUser();
-  if (!user) redirect("/login");
+export default function DashboardPage() {
+  const st = useDemo();
+  const user = currentUser(st);
+  if (!user) return null;
 
-  const stats = await getSellerStats(user.id);
+  const stats = selectSellerStats(st, user.id);
 
   return (
     <div className="px-5 pb-6">
@@ -65,32 +67,13 @@ export default async function DashboardPage() {
         <p className="text-sm text-muted">Bugungi ko&apos;rsatkichlaringiz</p>
       </div>
 
-      {/* Asosiy statistikalar */}
       <div className="grid grid-cols-2 gap-3">
-        <StatCard
-          icon={<Wallet size={18} />}
-          label="Jami daromad"
-          value={formatPrice(stats.totalRevenue)}
-          accent
-        />
-        <StatCard
-          icon={<ShoppingBag size={18} />}
-          label="Sotuvlar"
-          value={formatCompact(stats.totalSales)}
-        />
-        <StatCard
-          icon={<Eye size={18} />}
-          label="Kurs ko'rishlari"
-          value={formatCompact(stats.totalViews)}
-        />
-        <StatCard
-          icon={<BookOpen size={18} />}
-          label="Kurslar"
-          value={String(stats.totalCourses)}
-        />
+        <StatCard icon={<Wallet size={18} />} label="Jami daromad" value={formatPrice(stats.totalRevenue)} accent />
+        <StatCard icon={<ShoppingBag size={18} />} label="Sotuvlar" value={formatCompact(stats.totalSales)} />
+        <StatCard icon={<Eye size={18} />} label="Kurs ko'rishlari" value={formatCompact(stats.totalViews)} />
+        <StatCard icon={<BookOpen size={18} />} label="Kurslar" value={String(stats.totalCourses)} />
       </div>
 
-      {/* Eng mashhur kurs */}
       {stats.topCourse && stats.topCourse.revenue > 0 && (
         <div className="mt-3 flex items-center gap-3 rounded-[var(--radius-lg)] border border-border bg-surface p-4">
           <span className="flex h-10 w-10 items-center justify-center rounded-full bg-accent-soft text-accent">
@@ -98,47 +81,24 @@ export default async function DashboardPage() {
           </span>
           <div className="min-w-0 flex-1">
             <p className="text-xs text-muted">Eng ko&apos;p daromad keltirgan</p>
-            <p className="truncate text-sm font-semibold text-foreground">
-              {stats.topCourse.title}
-            </p>
+            <p className="truncate text-sm font-semibold text-foreground">{stats.topCourse.title}</p>
           </div>
-          <p className="text-sm font-bold text-accent">
-            {formatPrice(stats.topCourse.revenue)}
-          </p>
+          <p className="text-sm font-bold text-accent">{formatPrice(stats.topCourse.revenue)}</p>
         </div>
       )}
 
-      {/* Daromad grafigi */}
       <div className="mt-5">
         <RevenueChart
-          courses={stats.courses.map((c) => ({
-            name: c.title,
-            revenue: c.revenue,
-            sales: c.salesCount,
-          }))}
+          courses={stats.courses.map((c) => ({ name: c.title, revenue: c.revenue, sales: c.salesCount }))}
         />
       </div>
 
-      {/* Reels statistikasi */}
       <div className="mt-3 grid grid-cols-3 gap-3">
-        <StatCard
-          icon={<Clapperboard size={18} />}
-          label="Reels"
-          value={String(stats.totalReels)}
-        />
-        <StatCard
-          icon={<Eye size={18} />}
-          label="Reel ko'rish"
-          value={formatCompact(stats.reelViews)}
-        />
-        <StatCard
-          icon={<Heart size={18} />}
-          label="Like"
-          value={formatCompact(stats.reelLikes)}
-        />
+        <StatCard icon={<Clapperboard size={18} />} label="Reels" value={String(stats.totalReels)} />
+        <StatCard icon={<Eye size={18} />} label="Reel ko'rish" value={formatCompact(stats.reelViews)} />
+        <StatCard icon={<Heart size={18} />} label="Like" value={formatCompact(stats.reelLikes)} />
       </div>
 
-      {/* Kurslar ro'yxati */}
       <div className="mt-6">
         <h2 className="mb-3 text-sm font-bold uppercase tracking-wide text-subtle">
           Kurslar ko&apos;rsatkichi
@@ -150,17 +110,10 @@ export default async function DashboardPage() {
         ) : (
           <div className="flex flex-col gap-2">
             {stats.courses.map((c) => (
-              <div
-                key={c.id}
-                className="rounded-[var(--radius-md)] border border-border bg-surface p-3"
-              >
+              <div key={c.id} className="rounded-[var(--radius-md)] border border-border bg-surface p-3">
                 <div className="flex items-center justify-between gap-2">
-                  <p className="truncate text-sm font-semibold text-foreground">
-                    {c.title}
-                  </p>
-                  <p className="shrink-0 text-sm font-bold text-accent">
-                    {formatPrice(c.revenue)}
-                  </p>
+                  <p className="truncate text-sm font-semibold text-foreground">{c.title}</p>
+                  <p className="shrink-0 text-sm font-bold text-accent">{formatPrice(c.revenue)}</p>
                 </div>
                 <div className="mt-2 flex items-center gap-4 text-xs text-muted">
                   <span className="flex items-center gap-1">

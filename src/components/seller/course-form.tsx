@@ -2,65 +2,45 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CATEGORIES } from "@/lib/constants";
+import { useDemo } from "@/lib/demo/use-demo";
 import { cn } from "@/lib/utils";
 
 export function CourseForm() {
   const router = useRouter();
+  const createCourse = useDemo((s) => s.createCourse);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
   const [category, setCategory] = useState("");
   const [coverImage, setCoverImage] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
 
-  async function handleSubmit(e: React.FormEvent) {
+  function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    setLoading(true);
-    try {
-      const res = await fetch("/api/courses", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title,
-          description,
-          price: Number(price || 0),
-          category,
-          coverImage,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error ?? "Xatolik yuz berdi");
-        return;
-      }
-      // Kurs yaratildi — darslar/reel qo'shish sahifasiga
-      router.push(`/studio/${data.course.id}`);
-      router.refresh();
-    } catch {
-      setError("Server bilan bog'lanib bo'lmadi");
-    } finally {
-      setLoading(false);
-    }
+    if (title.trim().length < 3) return setError("Kurs nomi kamida 3 ta harf");
+    if (description.trim().length < 10) return setError("Tavsif kamida 10 ta belgi");
+    if (!category) return setError("Kategoriyani tanlang");
+
+    const { id } = createCourse({
+      title: title.trim(),
+      description: description.trim(),
+      price: Number(price || 0),
+      category,
+      coverImage: coverImage.trim() || undefined,
+    });
+    router.push(`/studio/${id}`);
   }
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-5">
       <div>
         <Label htmlFor="title">Kurs nomi</Label>
-        <Input
-          id="title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="Masalan: Noldan Web Dasturlash"
-          required
-        />
+        <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Masalan: Noldan Web Dasturlash" required />
       </div>
 
       <div>
@@ -78,16 +58,7 @@ export function CourseForm() {
 
       <div>
         <Label htmlFor="price">Narx (so&apos;m)</Label>
-        <Input
-          id="price"
-          type="number"
-          inputMode="numeric"
-          min={0}
-          value={price}
-          onChange={(e) => setPrice(e.target.value)}
-          placeholder="199000"
-          required
-        />
+        <Input id="price" type="number" inputMode="numeric" min={0} value={price} onChange={(e) => setPrice(e.target.value)} placeholder="199000" required />
       </div>
 
       <div>
@@ -113,23 +84,14 @@ export function CourseForm() {
 
       <div>
         <Label htmlFor="cover">Muqova rasmi havolasi (ixtiyoriy)</Label>
-        <Input
-          id="cover"
-          type="url"
-          value={coverImage}
-          onChange={(e) => setCoverImage(e.target.value)}
-          placeholder="https://..."
-        />
+        <Input id="cover" type="url" value={coverImage} onChange={(e) => setCoverImage(e.target.value)} placeholder="https://..." />
       </div>
 
       {error && (
-        <p className="rounded-[var(--radius-sm)] bg-danger/10 px-3 py-2 text-sm text-danger">
-          {error}
-        </p>
+        <p className="rounded-[var(--radius-sm)] bg-danger/10 px-3 py-2 text-sm text-danger">{error}</p>
       )}
 
-      <Button type="submit" size="lg" block disabled={loading}>
-        {loading && <Loader2 size={18} className="animate-spin" />}
+      <Button type="submit" size="lg" block>
         Kursni yaratish
       </Button>
     </form>

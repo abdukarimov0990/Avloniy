@@ -1,28 +1,24 @@
-import { redirect } from "next/navigation";
+"use client";
+
 import Link from "next/link";
+import { Mail, Flame, Award, Bookmark, Heart, ChevronRight } from "lucide-react";
+import { useDemo } from "@/lib/demo/use-demo";
 import {
-  Mail,
-  Flame,
-  Award,
-  Bookmark,
-  Heart,
-  ChevronRight,
-} from "lucide-react";
-import { getCurrentUser } from "@/lib/auth";
-import { getPurchasedCourses } from "@/lib/courses";
-import { getStreak } from "@/lib/streak";
-import { getUserCertificates } from "@/lib/certificates";
+  currentUser,
+  selectPurchasedCourses,
+  selectStreak,
+  selectUserCertificates,
+} from "@/lib/demo/state";
 import { LogoutButton } from "@/components/auth/logout-button";
 
-export default async function ProfilePage() {
-  const user = await getCurrentUser();
-  if (!user) redirect("/login");
+export default function ProfilePage() {
+  const st = useDemo();
+  const user = currentUser(st);
+  if (!user) return null;
 
-  const [courses, streak, certificates] = await Promise.all([
-    getPurchasedCourses(user.id),
-    getStreak(user.id),
-    getUserCertificates(user.id),
-  ]);
+  const courses = selectPurchasedCourses(st, user.id);
+  const streak = selectStreak(st, user.id);
+  const certificates = selectUserCertificates(st, user.id);
 
   return (
     <div className="h-full overflow-y-auto px-5 pb-6">
@@ -31,7 +27,6 @@ export default async function ProfilePage() {
         <LogoutButton />
       </div>
 
-      {/* Avatar va ism */}
       <div className="flex flex-col items-center gap-3 py-4">
         {user.avatar ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -71,9 +66,7 @@ export default async function ProfilePage() {
           <p className="text-xs text-muted">Kurslar</p>
         </div>
         <div className="rounded-[var(--radius-lg)] border border-border bg-surface p-4 text-center">
-          <p className="text-2xl font-extrabold text-foreground">
-            {certificates.length}
-          </p>
+          <p className="text-2xl font-extrabold text-foreground">{certificates.length}</p>
           <p className="text-xs text-muted">Sertifikat</p>
         </div>
       </div>
@@ -84,13 +77,11 @@ export default async function ProfilePage() {
         </p>
       )}
 
-      {/* Tezkor havolalar */}
       <div className="mt-5 flex flex-col gap-2">
         <ProfileLink href="/saved" icon={<Bookmark size={18} />} label="Saqlangan reels" />
         <ProfileLink href="/wishlist" icon={<Heart size={18} />} label="Istaklarim" />
       </div>
 
-      {/* Sertifikatlar */}
       {certificates.length > 0 && (
         <section className="mt-6">
           <h2 className="mb-3 text-sm font-bold uppercase tracking-wide text-subtle">
@@ -119,7 +110,6 @@ export default async function ProfilePage() {
         </section>
       )}
 
-      {/* Ma'lumotlar */}
       <div className="mt-6 rounded-[var(--radius-lg)] border border-border bg-surface">
         <div className="flex items-center gap-3 p-4">
           <Mail size={18} className="text-muted" />

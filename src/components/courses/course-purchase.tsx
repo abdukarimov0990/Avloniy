@@ -1,12 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { ShoppingBag, Loader2, Check, CreditCard, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useDemo } from "@/lib/demo/use-demo";
 import { formatPrice } from "@/lib/utils";
 
 type Stage = "idle" | "confirm" | "processing" | "done";
+
+const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 export function CoursePurchase({
   courseId,
@@ -17,37 +19,20 @@ export function CoursePurchase({
   title: string;
   price: number;
 }) {
-  const router = useRouter();
+  const purchase = useDemo((s) => s.purchase);
   const [stage, setStage] = useState<Stage>("idle");
-  const [error, setError] = useState<string | null>(null);
 
   async function handlePay() {
     setStage("processing");
-    setError(null);
-    try {
-      const res = await fetch(`/api/courses/${courseId}/purchase`, {
-        method: "POST",
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        setError(data.error ?? "To'lov amalga oshmadi");
-        setStage("confirm");
-        return;
-      }
-      setStage("done");
-      // Bir oz kutib, sahifani yangilaymiz (endi "sotib olingan" holatda)
-      setTimeout(() => {
-        router.refresh();
-      }, 1200);
-    } catch {
-      setError("Server bilan bog'lanib bo'lmadi");
-      setStage("confirm");
-    }
+    await wait(600);
+    setStage("done");
+    await wait(1200);
+    // Store yangilanadi → kurs sahifasi qayta chiziladi, bu panel yo'qoladi.
+    purchase(courseId);
   }
 
   return (
     <>
-      {/* Pastki belgilangan sotib olish paneli */}
       <div className="fixed inset-x-0 bottom-0 z-30 mx-auto w-full max-w-[var(--width-shell)] border-t border-border bg-surface/95 p-4 backdrop-blur">
         <Button block size="lg" onClick={() => setStage("confirm")}>
           <ShoppingBag size={18} />
@@ -55,12 +40,11 @@ export function CoursePurchase({
         </Button>
       </div>
 
-      {/* Mock to'lov oynasi */}
       {stage !== "idle" && (
         <>
           <div
             className="fixed inset-0 z-40 bg-black/60"
-            onClick={() => stage !== "processing" && setStage("idle")}
+            onClick={() => stage === "confirm" && setStage("idle")}
           />
           <div className="fixed inset-x-0 bottom-0 z-50 mx-auto w-full max-w-[var(--width-shell)] rounded-t-[var(--radius-xl)] border-t border-border bg-surface p-5">
             {stage === "done" ? (
@@ -99,18 +83,7 @@ export function CoursePurchase({
                   Demo to&apos;lov — haqiqiy karta talab qilinmaydi
                 </div>
 
-                {error && (
-                  <p className="mb-3 rounded-[var(--radius-sm)] bg-danger/10 px-3 py-2 text-sm text-danger">
-                    {error}
-                  </p>
-                )}
-
-                <Button
-                  block
-                  size="lg"
-                  onClick={handlePay}
-                  disabled={stage === "processing"}
-                >
+                <Button block size="lg" onClick={handlePay} disabled={stage === "processing"}>
                   {stage === "processing" ? (
                     <>
                       <Loader2 size={18} className="animate-spin" /> To&apos;lanmoqda...

@@ -8,19 +8,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RoleSelector } from "@/components/auth/role-selector";
-import { useAuthStore } from "@/lib/store/auth-store";
+import { useDemo } from "@/lib/demo/use-demo";
+import { homePath } from "@/lib/demo/hooks";
 import type { Role } from "@/types";
 
 type Mode = "login" | "register";
 
-const HOME_PATH: Record<Role, string> = {
-  BUYER: "/feed",
-  SELLER: "/dashboard",
-};
-
 export function AuthForm({ mode }: { mode: Mode }) {
   const router = useRouter();
-  const setUser = useAuthStore((s) => s.setUser);
+  const login = useDemo((s) => s.login);
+  const register = useDemo((s) => s.register);
 
   const [role, setRole] = useState<Role>("BUYER");
   const [name, setName] = useState("");
@@ -31,36 +28,39 @@ export function AuthForm({ mode }: { mode: Mode }) {
 
   const isRegister = mode === "register";
 
-  async function handleSubmit(e: React.FormEvent) {
+  function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setLoading(true);
 
-    try {
-      const res = await fetch(`/api/auth/${mode}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(
-          isRegister ? { name, email, password, role } : { email, password, role }
-        ),
-      });
-      const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.error ?? "Xatolik yuz berdi");
-        return;
-      }
-
-      setUser(data.user);
-      // Sotuvchi profilini hali to'ldirmagan bo'lsa, keyinchalik onboarding'ga
-      // yo'naltirish mantiqi qo'shiladi. Hozircha asosiy sahifaga.
-      router.push(HOME_PATH[data.user.role as Role]);
-      router.refresh();
-    } catch {
-      setError("Server bilan bog'lanib bo'lmadi");
-    } finally {
+    // Oddiy validatsiya
+    if (isRegister && name.trim().length < 2) {
+      setError("Ism kamida 2 ta harf bo'lsin");
       setLoading(false);
+      return;
     }
+    if (!email.includes("@")) {
+      setError("Email noto'g'ri");
+      setLoading(false);
+      return;
+    }
+    if (isRegister && password.length < 6) {
+      setError("Parol kamida 6 ta belgi bo'lsin");
+      setLoading(false);
+      return;
+    }
+
+    const result = isRegister
+      ? register({ name: name.trim(), email: email.trim(), password, role })
+      : login(email.trim(), password, role);
+
+    if (!result.ok) {
+      setError(result.error ?? "Xatolik yuz berdi");
+      setLoading(false);
+      return;
+    }
+
+    router.replace(homePath(role));
   }
 
   return (

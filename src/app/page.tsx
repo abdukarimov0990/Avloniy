@@ -1,18 +1,28 @@
-import { redirect } from "next/navigation";
+"use client";
+
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Play, ArrowRight } from "lucide-react";
-import { getCurrentUser } from "@/lib/auth";
+import { useDemo } from "@/lib/demo/use-demo";
+import { currentUser } from "@/lib/demo/state";
+import { homePath } from "@/lib/demo/hooks";
 import { MobileShell } from "@/components/layout/mobile-shell";
 import { Logo } from "@/components/brand/logo";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-export default async function LandingPage() {
-  // Allaqachon kirgan bo'lsa — o'z sahifasiga
-  const user = await getCurrentUser();
-  if (user) {
-    redirect(user.role === "SELLER" ? "/dashboard" : "/feed");
-  }
+export default function LandingPage() {
+  const router = useRouter();
+  const st = useDemo();
+  const user = currentUser(st);
+  const role = user?.role ?? null;
+
+  useEffect(() => {
+    if (role) router.replace(homePath(role));
+  }, [role, router]);
+
+  if (user) return null;
 
   return (
     <MobileShell>

@@ -1,17 +1,19 @@
+"use client";
+
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { GraduationCap, PlayCircle, ChevronRight } from "lucide-react";
-import { getCurrentUser } from "@/lib/auth";
-import { getPurchasedCourses } from "@/lib/courses";
+import { useDemo } from "@/lib/demo/use-demo";
+import { currentUser, selectPurchasedCourses } from "@/lib/demo/state";
 import { buttonVariants } from "@/components/ui/button";
 import { ProgressBar } from "@/components/courses/progress-bar";
 import { cn } from "@/lib/utils";
 
-export default async function LibraryPage() {
-  const user = await getCurrentUser();
-  if (!user) redirect("/login");
+export default function LibraryPage() {
+  const st = useDemo();
+  const user = currentUser(st);
+  if (!user) return null;
 
-  const courses = await getPurchasedCourses(user.id);
+  const courses = selectPurchasedCourses(st, user.id);
 
   return (
     <div className="h-full overflow-y-auto px-5 pb-6">

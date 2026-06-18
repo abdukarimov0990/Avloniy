@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
 import { Heart } from "lucide-react";
+import { useDemo } from "@/lib/demo/use-demo";
 import { cn } from "@/lib/utils";
 
-/** Kursni istaklar ro'yxatiga qo'shish/olib tashlash tugmasi */
+/** Kursni istaklar ro'yxatiga qo'shish/olib tashlash tugmasi (store'ni o'qiydi) */
 export function WishlistButton({
   courseId,
   initialWishlisted,
@@ -12,35 +12,16 @@ export function WishlistButton({
   courseId: string;
   initialWishlisted: boolean;
 }) {
-  const [wishlisted, setWishlisted] = useState(initialWishlisted);
-  const [pending, setPending] = useState(false);
+  const uid = useDemo((s) => s.currentUserId);
+  const wishlist = useDemo((s) => s.wishlist);
+  const toggleWishlist = useDemo((s) => s.toggleWishlist);
 
-  async function toggle() {
-    if (pending) return;
-    setPending(true);
-    const next = !wishlisted;
-    setWishlisted(next); // optimistik
-    try {
-      const res = await fetch(`/api/courses/${courseId}/wishlist`, {
-        method: "POST",
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setWishlisted(data.wishlisted);
-      } else {
-        setWishlisted(!next);
-      }
-    } catch {
-      setWishlisted(!next);
-    } finally {
-      setPending(false);
-    }
-  }
+  const wishlisted = uid ? wishlist.includes(`${uid}:${courseId}`) : initialWishlisted;
 
   return (
     <button
       type="button"
-      onClick={toggle}
+      onClick={() => toggleWishlist(courseId)}
       className={cn(
         "flex h-11 w-11 shrink-0 items-center justify-center rounded-[var(--radius-md)] border transition active:scale-95",
         wishlisted

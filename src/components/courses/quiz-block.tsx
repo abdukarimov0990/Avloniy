@@ -1,14 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { CheckCircle2, XCircle, HelpCircle } from "lucide-react";
+import { useDemo } from "@/lib/demo/use-demo";
+import { selectLessonQuizzes } from "@/lib/demo/state";
 import { cn } from "@/lib/utils";
-
-interface Quiz {
-  id: string;
-  question: string;
-  options: string[];
-}
 
 interface Answer {
   selectedIndex: number;
@@ -18,54 +14,26 @@ interface Answer {
 
 /** Dars ostidagi kviz bloki — buyer javob beradi, natija ko'rsatiladi */
 export function QuizBlock({ lessonId }: { lessonId: string }) {
-  const [quizzes, setQuizzes] = useState<Quiz[]>([]);
+  const st = useDemo();
+  const recordQuiz = useDemo((s) => s.recordQuiz);
+  const quizzes = selectLessonQuizzes(st, lessonId);
   const [answers, setAnswers] = useState<Record<string, Answer>>({});
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    let cancelled = false;
-    const load = async () => {
-      setLoading(true);
-      try {
-        const res = await fetch(`/api/lessons/${lessonId}/quiz`);
-        const data = await res.json();
-        if (!cancelled) setQuizzes(data.quizzes ?? []);
-      } catch {
-        if (!cancelled) setQuizzes([]);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    };
-    load();
-    return () => {
-      cancelled = true;
-    };
-  }, [lessonId]);
+  if (quizzes.length === 0) return null;
 
-  async function answer(quizId: string, index: number) {
-    if (answers[quizId]) return; // allaqachon javob berilgan
-    try {
-      const res = await fetch(`/api/quiz/${quizId}/attempt`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ selectedIndex: index }),
-      });
-      if (!res.ok) return;
-      const data = await res.json();
-      setAnswers((prev) => ({
-        ...prev,
-        [quizId]: {
-          selectedIndex: index,
-          isCorrect: data.isCorrect,
-          correctOptionIndex: data.correctOptionIndex,
-        },
-      }));
-    } catch {
-      /* ignore */
-    }
+  function answer(quizId: string, index: number) {
+    if (answers[quizId]) return;
+    const result = recordQuiz(quizId, index);
+    if (!result) return;
+    setAnswers((prev) => ({
+      ...prev,
+      [quizId]: {
+        selectedIndex: index,
+        isCorrect: result.isCorrect,
+        correctOptionIndex: result.correctOptionIndex,
+      },
+    }));
   }
-
-  if (loading || quizzes.length === 0) return null;
 
   return (
     <div className="space-y-4 bg-surface p-3">

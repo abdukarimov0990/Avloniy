@@ -2,45 +2,27 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { CATEGORIES } from "@/lib/constants";
+import { useDemo } from "@/lib/demo/use-demo";
 import { cn } from "@/lib/utils";
 
 export function OnboardingForm() {
   const router = useRouter();
+  const setOnboarding = useDemo((s) => s.setOnboarding);
   const [category, setCategory] = useState<string>("");
   const [bio, setBio] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
 
-  async function handleSubmit(e: React.FormEvent) {
+  function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!category) {
       setError("Yo'nalishni tanlang");
       return;
     }
-    setError(null);
-    setLoading(true);
-    try {
-      const res = await fetch("/api/seller/onboarding", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ category, bio }),
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        setError(data.error ?? "Xatolik yuz berdi");
-        return;
-      }
-      router.push("/dashboard");
-      router.refresh();
-    } catch {
-      setError("Server bilan bog'lanib bo'lmadi");
-    } finally {
-      setLoading(false);
-    }
+    setOnboarding(category, bio.trim() || null);
+    router.replace("/dashboard");
   }
 
   return (
@@ -85,8 +67,7 @@ export function OnboardingForm() {
         </p>
       )}
 
-      <Button type="submit" size="lg" block disabled={loading}>
-        {loading && <Loader2 size={18} className="animate-spin" />}
+      <Button type="submit" size="lg" block>
         Davom etish
       </Button>
     </form>

@@ -1,25 +1,21 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useAuthStore } from "@/lib/store/auth-store";
+import { useDemo } from "@/lib/demo/use-demo";
 
 export function LogoutButton() {
   const router = useRouter();
-  const logout = useAuthStore((s) => s.logout);
-  const [loading, setLoading] = useState(false);
+  const logout = useDemo((s) => s.logout);
 
-  async function handleLogout() {
-    setLoading(true);
-    await logout();
-    router.push("/login");
-    router.refresh();
+  function handleLogout() {
+    logout();
+    router.replace("/login");
   }
 
   return (
-    <Button variant="ghost" size="sm" onClick={handleLogout} disabled={loading}>
+    <Button variant="ghost" size="sm" onClick={handleLogout}>
       <LogOut size={16} /> Chiqish
     </Button>
   );

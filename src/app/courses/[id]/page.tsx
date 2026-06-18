@@ -1,8 +1,10 @@
-import { notFound, redirect } from "next/navigation";
+"use client";
+
 import Link from "next/link";
+import { useParams } from "next/navigation";
 import { ArrowLeft, Eye, Users, PlayCircle, Award } from "lucide-react";
-import { getCurrentUser } from "@/lib/auth";
-import { getCourseDetail } from "@/lib/courses";
+import { selectCourseDetail } from "@/lib/demo/state";
+import { useGuard } from "@/lib/demo/hooks";
 import { MobileShell } from "@/components/layout/mobile-shell";
 import { LessonList } from "@/components/courses/lesson-list";
 import { CoursePurchase } from "@/components/courses/course-purchase";
@@ -11,22 +13,28 @@ import { WishlistButton } from "@/components/courses/wishlist-button";
 import { buttonVariants } from "@/components/ui/button";
 import { cn, formatCompact } from "@/lib/utils";
 
-export default async function CoursePage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const user = await getCurrentUser();
-  if (!user) redirect("/login");
+export default function CoursePage() {
+  const params = useParams<{ id: string }>();
+  const { st, user } = useGuard("BUYER");
+  if (!user) return null;
 
-  const { id } = await params;
-  const course = await getCourseDetail(id, user.id);
-  if (!course) notFound();
+  const course = selectCourseDetail(st, params.id, user.id);
+  if (!course) {
+    return (
+      <MobileShell>
+        <div className="flex flex-1 flex-col items-center justify-center gap-3 text-center">
+          <p className="text-muted">Kurs topilmadi.</p>
+          <Link href="/feed" className={cn(buttonVariants({ size: "md" }))}>
+            Lentaga qaytish
+          </Link>
+        </div>
+      </MobileShell>
+    );
+  }
 
   return (
     <MobileShell noPadding>
       <div className="relative flex-1 overflow-y-auto pb-28">
-        {/* Muqova */}
         <div className="relative h-56 w-full bg-surface-2">
           {course.coverImage && (
             // eslint-disable-next-line @next/next/no-img-element
@@ -49,18 +57,13 @@ export default async function CoursePage({
         </div>
 
         <div className="px-5">
-          {/* Sarlavha + istaklar */}
           <div className="-mt-6 flex items-end gap-3">
             <h1 className="flex-1 text-2xl font-extrabold leading-tight text-foreground">
               {course.title}
             </h1>
-            <WishlistButton
-              courseId={course.id}
-              initialWishlisted={course.wishlisted}
-            />
+            <WishlistButton courseId={course.id} initialWishlisted={course.wishlisted} />
           </div>
 
-          {/* Statistikalar */}
           <div className="mt-3 flex items-center gap-4 text-sm text-muted">
             <span className="flex items-center gap-1.5">
               <Eye size={16} /> {formatCompact(course.viewsCount)} ko&apos;rish
@@ -73,7 +76,6 @@ export default async function CoursePage({
             </span>
           </div>
 
-          {/* Hashtaglar */}
           {course.hashtags.length > 0 && (
             <div className="mt-3 flex flex-wrap gap-2">
               {course.hashtags.map((tag) => (
@@ -84,7 +86,6 @@ export default async function CoursePage({
             </div>
           )}
 
-          {/* Sotuvchi */}
           <div className="mt-4 flex items-center gap-3 rounded-[var(--radius-md)] border border-border bg-surface p-3">
             {course.seller.avatar ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -99,16 +100,13 @@ export default async function CoursePage({
               </span>
             )}
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold text-foreground">
-                {course.seller.name}
-              </p>
+              <p className="text-sm font-semibold text-foreground">{course.seller.name}</p>
               {course.seller.bio && (
                 <p className="truncate text-xs text-muted">{course.seller.bio}</p>
               )}
             </div>
           </div>
 
-          {/* Progress (sotib olingan bo'lsa) */}
           {course.purchased && (
             <div className="mt-4 rounded-[var(--radius-md)] border border-border bg-surface p-4">
               <div className="mb-2 flex items-center justify-between">
@@ -135,7 +133,6 @@ export default async function CoursePage({
             </div>
           )}
 
-          {/* Tavsif */}
           <section className="mt-5">
             <h2 className="mb-2 text-sm font-bold uppercase tracking-wide text-subtle">
               Kurs haqida
@@ -143,7 +140,6 @@ export default async function CoursePage({
             <p className="text-sm leading-relaxed text-muted">{course.description}</p>
           </section>
 
-          {/* Darslar */}
           <section className="mt-6">
             <h2 className="mb-3 text-sm font-bold uppercase tracking-wide text-subtle">
               Darslar ({course.lessons.length})
@@ -153,13 +149,8 @@ export default async function CoursePage({
         </div>
       </div>
 
-      {/* Sotib olish paneli (faqat sotib olinmagan bo'lsa) */}
       {!course.purchased && (
-        <CoursePurchase
-          courseId={course.id}
-          title={course.title}
-          price={course.price}
-        />
+        <CoursePurchase courseId={course.id} title={course.title} price={course.price} />
       )}
     </MobileShell>
   );

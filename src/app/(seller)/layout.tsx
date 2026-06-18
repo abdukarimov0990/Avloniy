@@ -1,17 +1,24 @@
-import { redirect } from "next/navigation";
-import { getCurrentUser } from "@/lib/auth";
+"use client";
+
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useGuard } from "@/lib/demo/hooks";
 import { SellerNav } from "@/components/layout/seller-nav";
 
-export default async function SellerLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const user = await getCurrentUser();
-  if (!user) redirect("/login");
-  if (user.role !== "SELLER") redirect("/feed");
+export default function SellerLayout({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
+  const { user } = useGuard("SELLER");
+  const role = user?.role ?? null;
+  const category = user?.category ?? null;
+
   // Profil to'ldirilmagan bo'lsa — onboarding'ga
-  if (!user.category) redirect("/onboarding");
+  useEffect(() => {
+    if (role === "SELLER" && !category) {
+      router.replace("/onboarding");
+    }
+  }, [role, category, router]);
+
+  if (!user || !user.category) return null;
 
   return (
     <div className="mx-auto flex h-dvh w-full max-w-[var(--width-shell)] flex-col bg-background sm:border-x sm:border-border">

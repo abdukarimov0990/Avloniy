@@ -1,41 +1,23 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { Loader2, Plus, Clapperboard } from "lucide-react";
+import { Plus, Clapperboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useDemo } from "@/lib/demo/use-demo";
 
 /** Kursga dars qo'shish formasi */
 export function AddLessonForm({ courseId }: { courseId: string }) {
-  const router = useRouter();
+  const addLesson = useDemo((s) => s.addLesson);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  async function handleSubmit(e: React.FormEvent) {
+  function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!title.trim()) return;
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await fetch(`/api/courses/${courseId}/lessons`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, content }),
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        setError(data.error ?? "Xatolik");
-        return;
-      }
-      setTitle("");
-      setContent("");
-      router.refresh();
-    } finally {
-      setLoading(false);
-    }
+    addLesson(courseId, { title: title.trim(), content: content.trim() });
+    setTitle("");
+    setContent("");
   }
 
   return (
@@ -43,11 +25,7 @@ export function AddLessonForm({ courseId }: { courseId: string }) {
       onSubmit={handleSubmit}
       className="flex flex-col gap-3 rounded-[var(--radius-md)] border border-border bg-surface p-4"
     >
-      <Input
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        placeholder="Dars nomi"
-      />
+      <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Dars nomi" />
       <textarea
         value={content}
         onChange={(e) => setContent(e.target.value)}
@@ -58,10 +36,8 @@ export function AddLessonForm({ courseId }: { courseId: string }) {
       <p className="text-xs text-subtle">
         Video hozircha standart videodan olinadi (yuklash keyin qo&apos;shiladi).
       </p>
-      {error && <p className="text-sm text-danger">{error}</p>}
-      <Button type="submit" size="sm" disabled={loading}>
-        {loading ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
-        Dars qo&apos;shish
+      <Button type="submit" size="sm">
+        <Plus size={16} /> Dars qo&apos;shish
       </Button>
     </form>
   );
@@ -69,31 +45,13 @@ export function AddLessonForm({ courseId }: { courseId: string }) {
 
 /** Kursni reklama qiluvchi reel yaratish formasi */
 export function CreateReelForm({ courseId }: { courseId: string }) {
-  const router = useRouter();
+  const createReel = useDemo((s) => s.createReel);
   const [caption, setCaption] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  async function handleSubmit(e: React.FormEvent) {
+  function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await fetch(`/api/reels`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ courseId, caption }),
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        setError(data.error ?? "Xatolik");
-        return;
-      }
-      setCaption("");
-      router.refresh();
-    } finally {
-      setLoading(false);
-    }
+    createReel({ courseId, caption: caption.trim() });
+    setCaption("");
   }
 
   return (
@@ -109,14 +67,8 @@ export function CreateReelForm({ courseId }: { courseId: string }) {
       <p className="text-xs text-subtle">
         Reel xaridorlar lentasida standart video bilan chiqadi.
       </p>
-      {error && <p className="text-sm text-danger">{error}</p>}
-      <Button type="submit" size="sm" variant="secondary" disabled={loading}>
-        {loading ? (
-          <Loader2 size={16} className="animate-spin" />
-        ) : (
-          <Clapperboard size={16} />
-        )}
-        Reel yaratish
+      <Button type="submit" size="sm" variant="secondary">
+        <Clapperboard size={16} /> Reel yaratish
       </Button>
     </form>
   );

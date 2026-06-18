@@ -52,12 +52,14 @@ export function ReelCard({
   isActive,
   onLike,
   onSave,
+  onView,
   onOpenComments,
 }: {
   reel: FeedReel;
   isActive: boolean;
   onLike: (id: string) => void;
   onSave: (id: string) => void;
+  onView: (id: string) => void;
   onOpenComments: (reel: FeedReel) => void;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -78,12 +80,12 @@ export function ReelCard({
       // Ko'rishni bir marta hisoblaymiz
       if (!viewedRef.current) {
         viewedRef.current = true;
-        fetch(`/api/reels/${reel.id}/view`, { method: "POST" }).catch(() => {});
+        onView(reel.id);
       }
     } else {
       video.pause();
     }
-  }, [isActive, reel.id]);
+  }, [isActive, reel.id, onView]);
 
   function togglePlay() {
     const video = videoRef.current;

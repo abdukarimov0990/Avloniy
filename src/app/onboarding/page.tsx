@@ -1,14 +1,27 @@
-import { redirect } from "next/navigation";
-import { getCurrentUser } from "@/lib/auth";
+"use client";
+
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useDemo } from "@/lib/demo/use-demo";
+import { currentUser } from "@/lib/demo/state";
 import { MobileShell } from "@/components/layout/mobile-shell";
 import { OnboardingForm } from "@/components/seller/onboarding-form";
 
-export default async function OnboardingPage() {
-  const user = await getCurrentUser();
-  if (!user) redirect("/login");
-  if (user.role !== "SELLER") redirect("/feed");
-  // Allaqachon to'ldirgan bo'lsa — dashboard'ga
-  if (user.category) redirect("/dashboard");
+export default function OnboardingPage() {
+  const router = useRouter();
+  const st = useDemo();
+  const user = currentUser(st);
+  const role = user?.role ?? null;
+  const category = user?.category ?? null;
+  const hasUser = !!user;
+
+  useEffect(() => {
+    if (!hasUser) router.replace("/login");
+    else if (role !== "SELLER") router.replace("/feed");
+    else if (category) router.replace("/dashboard");
+  }, [hasUser, role, category, router]);
+
+  if (!user || user.role !== "SELLER" || user.category) return null;
 
   return (
     <MobileShell>

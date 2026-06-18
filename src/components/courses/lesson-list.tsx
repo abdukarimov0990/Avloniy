@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Lock, Play, ChevronDown, Check, Gift } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { QuizBlock } from "@/components/courses/quiz-block";
-import type { CourseLesson } from "@/lib/courses";
+import { useDemo } from "@/lib/demo/use-demo";
+import type { CourseLesson } from "@/lib/demo/state";
 
 export function LessonList({
   lessons,
@@ -16,37 +16,15 @@ export function LessonList({
   /** Kurs sotib olinganmi (preview darslar baribir ochiq) */
   purchased: boolean;
 }) {
-  const router = useRouter();
+  const markProgress = useDemo((s) => s.markProgress);
   const [openId, setOpenId] = useState<string | null>(null);
-  const [completed, setCompleted] = useState<Set<string>>(
-    () => new Set(lessons.filter((l) => l.completed).map((l) => l.id))
-  );
-  const [marking, setMarking] = useState<string | null>(null);
-
-  async function markComplete(lessonId: string) {
-    if (completed.has(lessonId)) return;
-    setMarking(lessonId);
-    // Optimistik
-    setCompleted((prev) => new Set(prev).add(lessonId));
-    try {
-      await fetch(`/api/lessons/${lessonId}/progress`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isCompleted: true }),
-      });
-      // Server progress bar / sertifikatni yangilash uchun
-      router.refresh();
-    } finally {
-      setMarking(null);
-    }
-  }
 
   return (
     <div className="flex flex-col gap-2">
       {lessons.map((lesson, i) => {
         const unlocked = purchased || lesson.isFreePreview;
         const isOpen = openId === lesson.id;
-        const isDone = completed.has(lesson.id);
+        const isDone = lesson.completed;
 
         return (
           <div
@@ -100,17 +78,15 @@ export function LessonList({
                     controls
                     playsInline
                     className="aspect-video w-full"
-                    onEnded={() => markComplete(lesson.id)}
+                    onEnded={() => markProgress(lesson.id, { isCompleted: true })}
                   />
                 )}
                 {lesson.content && (
                   <p className="bg-surface p-3 text-sm text-muted">{lesson.content}</p>
                 )}
 
-                {/* Kviz (agar bo'lsa) */}
                 {lesson.hasQuiz && <QuizBlock lessonId={lesson.id} />}
 
-                {/* Tugatish tugmasi */}
                 <div className="bg-surface p-3">
                   {isDone ? (
                     <p className="flex items-center gap-1.5 text-sm font-medium text-success">
@@ -120,8 +96,7 @@ export function LessonList({
                     <Button
                       size="sm"
                       variant="secondary"
-                      onClick={() => markComplete(lesson.id)}
-                      disabled={marking === lesson.id}
+                      onClick={() => markProgress(lesson.id, { isCompleted: true })}
                     >
                       <Check size={16} /> Tugatdim
                     </Button>

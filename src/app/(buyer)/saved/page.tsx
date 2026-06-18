@@ -1,15 +1,17 @@
+"use client";
+
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { ArrowLeft, Bookmark, Eye, Heart } from "lucide-react";
-import { getCurrentUser } from "@/lib/auth";
-import { getSavedReels } from "@/lib/reels";
+import { useDemo } from "@/lib/demo/use-demo";
+import { currentUser, selectSavedReels } from "@/lib/demo/state";
 import { formatCompact } from "@/lib/utils";
 
-export default async function SavedPage() {
-  const user = await getCurrentUser();
-  if (!user) redirect("/login");
+export default function SavedPage() {
+  const st = useDemo();
+  const user = currentUser(st);
+  if (!user) return null;
 
-  const reels = await getSavedReels(user.id);
+  const reels = selectSavedReels(st, user.id);
 
   return (
     <div className="h-full overflow-y-auto px-5 pb-6">

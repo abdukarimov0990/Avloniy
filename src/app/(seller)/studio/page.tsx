@@ -1,23 +1,22 @@
-import { redirect } from "next/navigation";
+"use client";
+
 import Link from "next/link";
 import { Plus, Eye, Heart, BookOpen, Clapperboard, ShoppingBag } from "lucide-react";
-import { getCurrentUser } from "@/lib/auth";
-import { getSellerStats, getSellerReels } from "@/lib/seller";
+import { useDemo } from "@/lib/demo/use-demo";
+import { currentUser, selectSellerStats, selectSellerReels } from "@/lib/demo/state";
 import { buttonVariants } from "@/components/ui/button";
 import { cn, formatCompact, formatPrice } from "@/lib/utils";
 
-export default async function StudioPage() {
-  const user = await getCurrentUser();
-  if (!user) redirect("/login");
+export default function StudioPage() {
+  const st = useDemo();
+  const user = currentUser(st);
+  if (!user) return null;
 
-  const [stats, reels] = await Promise.all([
-    getSellerStats(user.id),
-    getSellerReels(user.id),
-  ]);
+  const stats = selectSellerStats(st, user.id);
+  const reels = selectSellerReels(st, user.id);
 
   return (
     <div className="px-5 pb-6">
-      {/* Profil sarlavhasi */}
       <div className="flex items-center gap-4 py-6">
         {user.avatar ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -31,7 +30,6 @@ export default async function StudioPage() {
             {user.name.charAt(0)}
           </span>
         )}
-        {/* Statistika */}
         <div className="grid flex-1 grid-cols-3 gap-1 text-center">
           <div>
             <p className="text-lg font-extrabold text-foreground">{stats.totalCourses}</p>
@@ -42,15 +40,12 @@ export default async function StudioPage() {
             <p className="text-xs text-muted">Reels</p>
           </div>
           <div>
-            <p className="text-lg font-extrabold text-foreground">
-              {formatCompact(stats.totalSales)}
-            </p>
+            <p className="text-lg font-extrabold text-foreground">{formatCompact(stats.totalSales)}</p>
             <p className="text-xs text-muted">Sotuv</p>
           </div>
         </div>
       </div>
 
-      {/* Ism, kategoriya, bio */}
       <div>
         <p className="text-base font-bold text-foreground">{user.name}</p>
         {user.category && (
@@ -61,15 +56,10 @@ export default async function StudioPage() {
         {user.bio && <p className="mt-2 text-sm text-muted">{user.bio}</p>}
       </div>
 
-      {/* Yangi kurs */}
-      <Link
-        href="/studio/new"
-        className={cn(buttonVariants({ size: "md", block: true }), "mt-4")}
-      >
+      <Link href="/studio/new" className={cn(buttonVariants({ size: "md", block: true }), "mt-4")}>
         <Plus size={18} /> Yangi kurs yaratish
       </Link>
 
-      {/* Kurslar */}
       <section className="mt-6">
         <h2 className="mb-3 flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-subtle">
           <BookOpen size={15} /> Kurslar
@@ -110,7 +100,6 @@ export default async function StudioPage() {
         )}
       </section>
 
-      {/* Reels gridi (Instagram uslubida) */}
       <section className="mt-6">
         <h2 className="mb-3 flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-subtle">
           <Clapperboard size={15} /> Reels
@@ -127,13 +116,7 @@ export default async function StudioPage() {
                 href={`/studio/${r.courseId}`}
                 className="relative aspect-[9/16] overflow-hidden rounded-[var(--radius-sm)] bg-black"
               >
-                <video
-                  src={r.videoUrl}
-                  className="h-full w-full object-cover"
-                  muted
-                  playsInline
-                  preload="metadata"
-                />
+                <video src={r.videoUrl} className="h-full w-full object-cover" muted playsInline preload="metadata" />
                 <div className="absolute inset-x-0 bottom-0 flex items-center gap-2 bg-gradient-to-t from-black/70 to-transparent p-1.5 text-[10px] font-medium text-white">
                   <span className="flex items-center gap-0.5">
                     <Eye size={11} /> {formatCompact(r.viewsCount)}

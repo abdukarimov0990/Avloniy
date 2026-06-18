@@ -1,33 +1,39 @@
-import { notFound, redirect } from "next/navigation";
+"use client";
+
 import Link from "next/link";
+import { useParams } from "next/navigation";
 import { ArrowLeft, Award } from "lucide-react";
-import { getCurrentUser } from "@/lib/auth";
-import { getCertificate } from "@/lib/certificates";
+import { selectCertificate } from "@/lib/demo/state";
+import { useGuard } from "@/lib/demo/hooks";
 import { Logo } from "@/components/brand/logo";
 import { PrintButton } from "@/components/courses/print-button";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 function formatDate(iso: string): string {
   const d = new Date(iso);
-  return `${String(d.getDate()).padStart(2, "0")}.${String(
-    d.getMonth() + 1
-  ).padStart(2, "0")}.${d.getFullYear()}`;
+  return `${String(d.getDate()).padStart(2, "0")}.${String(d.getMonth() + 1).padStart(2, "0")}.${d.getFullYear()}`;
 }
 
-export default async function CertificatePage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const user = await getCurrentUser();
-  if (!user) redirect("/login");
+export default function CertificatePage() {
+  const params = useParams<{ id: string }>();
+  const { st, user } = useGuard();
+  if (!user) return null;
 
-  const { id } = await params;
-  const cert = await getCertificate(id, user.id);
-  if (!cert) notFound();
+  const cert = selectCertificate(st, params.id, user.id);
+  if (!cert) {
+    return (
+      <div className="mx-auto flex min-h-dvh w-full max-w-[var(--width-shell)] flex-col items-center justify-center gap-3 bg-background px-5 text-center">
+        <p className="text-muted">Sertifikat topilmadi.</p>
+        <Link href="/profile" className={cn(buttonVariants({ size: "md" }))}>
+          Profilga qaytish
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto min-h-dvh w-full max-w-[var(--width-shell)] bg-background px-5 py-6 print:max-w-none print:bg-white print:p-0">
-      {/* Yuqori panel (chop etishda yashiriladi) */}
       <div className="mb-5 flex items-center justify-between print:hidden">
         <Link
           href="/profile"
@@ -38,9 +44,7 @@ export default async function CertificatePage({
         <span className="text-sm text-muted">Sertifikat</span>
       </div>
 
-      {/* Sertifikat kartasi */}
       <div className="relative overflow-hidden rounded-[var(--radius-xl)] border-2 border-accent bg-surface p-8 text-center print:min-h-screen print:rounded-none print:border-0 print:bg-white print:py-24">
-        {/* Bezak doiralari */}
         <div className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-accent/10 print:hidden" />
         <div className="pointer-events-none absolute -bottom-10 -left-10 h-32 w-32 rounded-full bg-accent/10 print:hidden" />
 
@@ -56,9 +60,7 @@ export default async function CertificatePage({
           Tugatganlik sertifikati
         </p>
 
-        <p className="mt-6 text-xs text-subtle print:text-gray-500">
-          Ushbu sertifikat
-        </p>
+        <p className="mt-6 text-xs text-subtle print:text-gray-500">Ushbu sertifikat</p>
         <p className="mt-1 text-2xl font-extrabold text-foreground print:text-black">
           {cert.userName}
         </p>
@@ -69,9 +71,7 @@ export default async function CertificatePage({
 
         <div className="mt-8 flex items-center justify-between border-t border-border pt-4 text-left print:border-gray-200">
           <div>
-            <p className="text-[10px] uppercase text-subtle print:text-gray-400">
-              O&apos;qituvchi
-            </p>
+            <p className="text-[10px] uppercase text-subtle print:text-gray-400">O&apos;qituvchi</p>
             <p className="text-sm font-semibold text-foreground print:text-black">
               {cert.sellerName}
             </p>
@@ -89,7 +89,6 @@ export default async function CertificatePage({
         </p>
       </div>
 
-      {/* Chop etish tugmasi */}
       <div className="mt-5">
         <PrintButton />
       </div>

@@ -1,16 +1,23 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ReelCard } from "@/components/reels/reel-card";
 import { CommentsSheet } from "@/components/reels/comments-sheet";
+import { useDemo } from "@/lib/demo/use-demo";
+import { currentUser, selectFeedReels } from "@/lib/demo/state";
 import type { FeedReel } from "@/types";
 
-export function ReelsFeed({ initialReels }: { initialReels: FeedReel[] }) {
-  const [reels, setReels] = useState<FeedReel[]>(initialReels);
-  const [activeId, setActiveId] = useState<string | null>(
-    initialReels[0]?.id ?? null
-  );
-  const [commentsReel, setCommentsReel] = useState<FeedReel | null>(null);
+export function ReelsFeed() {
+  const st = useDemo();
+  const user = currentUser(st);
+  const reels = selectFeedReels(st, user?.id ?? undefined);
+
+  const toggleLike = useDemo((s) => s.toggleLike);
+  const toggleSave = useDemo((s) => s.toggleSave);
+  const incrementView = useDemo((s) => s.incrementView);
+
+  const [activeId, setActiveId] = useState<string | null>(reels[0]?.id ?? null);
+  const [commentsReelId, setCommentsReelId] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Qaysi reel ko'rinayotganini aniqlaymiz (autoplay uchun)
@@ -33,72 +40,8 @@ export function ReelsFeed({ initialReels }: { initialReels: FeedReel[] }) {
     return () => observer.disconnect();
   }, [reels.length]);
 
-  // Reel holatini qisman yangilash yordamchisi
-  const patchReel = useCallback((id: string, patch: Partial<FeedReel>) => {
-    setReels((prev) => prev.map((r) => (r.id === id ? { ...r, ...patch } : r)));
-  }, []);
-
-  // Like (optimistik)
-  const handleLike = useCallback(
-    async (id: string) => {
-      const current = reels.find((r) => r.id === id);
-      if (!current) return;
-      const nextLiked = !current.likedByMe;
-      patchReel(id, {
-        likedByMe: nextLiked,
-        likesCount: current.likesCount + (nextLiked ? 1 : -1),
-      });
-      try {
-        const res = await fetch(`/api/reels/${id}/like`, { method: "POST" });
-        if (res.ok) {
-          const data = await res.json();
-          patchReel(id, { likedByMe: data.liked, likesCount: data.likesCount });
-        } else {
-          // Xatolik bo'lsa qaytaramiz
-          patchReel(id, {
-            likedByMe: current.likedByMe,
-            likesCount: current.likesCount,
-          });
-        }
-      } catch {
-        patchReel(id, {
-          likedByMe: current.likedByMe,
-          likesCount: current.likesCount,
-        });
-      }
-    },
-    [reels, patchReel]
-  );
-
-  // Saqlash (optimistik)
-  const handleSave = useCallback(
-    async (id: string) => {
-      const current = reels.find((r) => r.id === id);
-      if (!current) return;
-      const next = !current.savedByMe;
-      patchReel(id, { savedByMe: next });
-      try {
-        const res = await fetch(`/api/reels/${id}/save`, { method: "POST" });
-        if (res.ok) {
-          const data = await res.json();
-          patchReel(id, { savedByMe: data.saved });
-        } else {
-          patchReel(id, { savedByMe: current.savedByMe });
-        }
-      } catch {
-        patchReel(id, { savedByMe: current.savedByMe });
-      }
-    },
-    [reels, patchReel]
-  );
-
-  const handleCommentAdded = useCallback(
-    (reelId: string) => {
-      const current = reels.find((r) => r.id === reelId);
-      if (current) patchReel(reelId, { commentsCount: current.commentsCount + 1 });
-    },
-    [reels, patchReel]
-  );
+  const commentsReel: FeedReel | null =
+    reels.find((r) => r.id === commentsReelId) ?? null;
 
   if (reels.length === 0) {
     return (
@@ -120,19 +63,16 @@ export function ReelsFeed({ initialReels }: { initialReels: FeedReel[] }) {
             <ReelCard
               reel={reel}
               isActive={activeId === reel.id}
-              onLike={handleLike}
-              onSave={handleSave}
-              onOpenComments={setCommentsReel}
+              onLike={toggleLike}
+              onSave={toggleSave}
+              onView={incrementView}
+              onOpenComments={(r) => setCommentsReelId(r.id)}
             />
           </div>
         ))}
       </div>
 
-      <CommentsSheet
-        reel={commentsReel}
-        onClose={() => setCommentsReel(null)}
-        onAdded={handleCommentAdded}
-      />
+      <CommentsSheet reel={commentsReel} onClose={() => setCommentsReelId(null)} />
     </>
   );
 }
