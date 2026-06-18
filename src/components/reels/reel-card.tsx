@@ -246,7 +246,7 @@ export function ReelCard({
         ) : (
           <Link
             href={`/courses/${reel.course.id}`}
-            className="flex h-12 items-center justify-center gap-2 rounded-[var(--radius-md)] bg-accent text-sm font-semibold text-white shadow-lg shadow-accent/30 transition active:scale-[0.98]"
+            className="gradient-accent flex h-12 items-center justify-center gap-2 rounded-[var(--radius-md)] text-sm font-semibold text-white shadow-lg shadow-mahogany/40 transition active:scale-[0.98]"
           >
             <ShoppingBag size={18} />
             Sotib olish — {formatPrice(reel.course.price)}
