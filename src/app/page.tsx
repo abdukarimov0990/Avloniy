@@ -32,7 +32,7 @@ export default function LandingPage() {
         </header>
 
         <div className="flex flex-1 flex-col justify-center">
-          <span className="gradient-accent mb-5 flex h-16 w-16 items-center justify-center rounded-[var(--radius-xl)] text-white shadow-lg shadow-mahogany/40">
+          <span className="mb-5 flex h-16 w-16 items-center justify-center rounded-[var(--radius-xl)] bg-accent text-white shadow-lg shadow-accent/30">
             <Play size={28} className="ml-1" fill="currentColor" />
           </span>
           <h1 className="text-3xl font-extrabold leading-tight text-foreground">

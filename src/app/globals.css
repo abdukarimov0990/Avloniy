@@ -1,37 +1,34 @@
 @import "tailwindcss";
 
 /*
- * Avloniy dizayn tizimi — issiq "espresso + apelsin" palitra.
- * Black bean (#3D1202), Mahogany (#BA3D03), Cadmium Orange (#E58423), Golf cream (#E8C581).
- * Ilova mobile-first va doimo dark (issiq jigarrang) mavzuda.
+ * Avloniy dizayn tizimi — faqat ikki asosiy rang:
+ *   • Light black (fon/yuzalar)  • Mahogany #BA3D03 (yagona aksent)
+ * Doimo dark mavzu, mobile-first.
  */
 @theme {
-  /* Fon va yuzalar (Black bean asosida) */
-  --color-background: #1f0a02;
-  --color-surface: #3d1202;
-  --color-surface-2: #4e1a06;
-  --color-elevated: #5e2309;
+  /* Fon va yuzalar (light black) */
+  --color-background: #1a1a1a;
+  --color-surface: #212121;
+  --color-surface-2: #2a2a2a;
+  --color-elevated: #303030;
 
-  /* Matn ranglari (issiq krem) */
-  --color-foreground: #fbeee0;
-  --color-muted: #d8b796;
-  --color-subtle: #9c7351;
+  /* Matn ranglari (neytral) */
+  --color-foreground: #f5f5f5;
+  --color-muted: #a3a3a3;
+  --color-subtle: #6b6b6b;
 
-  /* Aksent ranglar */
-  --color-accent: #e58423; /* Cadmium Orange — asosiy aksent */
-  --color-accent-bright: #f49a3d; /* hover */
-  --color-accent-soft: #e5842322;
-  --color-mahogany: #ba3d03; /* chuqur zang (gradient/ikkilamchi) */
-  --color-gold: #e8c581; /* Golf — krem-oltin (premium urg'u) */
-  --color-gold-soft: #e8c58122;
+  /* Yagona aksent — Mahogany */
+  --color-accent: #ba3d03;
+  --color-accent-bright: #d24604; /* hover — biroz yorqinroq mahogany */
+  --color-accent-soft: #ba3d0322;
 
-  /* Holatlar */
-  --color-danger: #e5484d;
-  --color-success: #4fb477;
+  /* Holatlar — aksent (ijobiy) va xato */
+  --color-danger: #d24604; /* xato ham mahogany oilasida (boshqa rang ishlatilmaydi) */
+  --color-success: #ba3d03; /* "bajarildi" — aksent bilan bir xil */
 
   /* Chegaralar */
-  --color-border: #532410;
-  --color-border-strong: #6e3417;
+  --color-border: #333333;
+  --color-border-strong: #454545;
 
   /* Burchak radiuslari */
   --radius-sm: 0.5rem;
@@ -52,7 +49,7 @@ body {
 }
 
 body {
-  background: #140600; /* shell tashqarisidagi eng to'q fon — telefon ramkasi tuyg'usi */
+  background: #000000; /* shell tashqarisidagi fon — telefon ramkasi tuyg'usi */
   color: var(--color-foreground);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
@@ -63,11 +60,6 @@ body {
 * {
   scrollbar-width: thin;
   scrollbar-color: var(--color-border-strong) transparent;
-}
-
-/* Issiq aksent gradienti (tugma, hero ikonkalar) */
-.gradient-accent {
-  background-image: linear-gradient(135deg, var(--color-mahogany), var(--color-accent));
 }
 
 /* Yengil animatsiya yordamchilari */

@@ -28,8 +28,10 @@ selektorlar bilan hisoblaydi, amallar uchun store action'larini chaqiradi.
 - zod ishlatilmaydi (validatsiya inline); lucide-react (ikonkalar), recharts (grafiklar)
 
 ## Dizayn tizimi
-Ranglar `globals.css`da: `background`/`surface` (light black), `accent` (orange `#FF6B35`),
-`foreground`/`muted`/`subtle`, `border`. Doimo dark mavzu. UI primitivlar: `src/components/ui/`.
+Faqat **2 rang**: light black (fon/yuzalar) + **Mahogany `#BA3D03`** (yagona aksent).
+Tokenlar `globals.css` `@theme`da: `background`/`surface`/`surface-2`, `accent`/`accent-bright`/`accent-soft`,
+`foreground`/`muted`/`subtle`, `border`. `success`=accent, `danger`=mahogany oilasi (boshqa rang yo'q).
+Doimo dark mavzu. UI primitivlar: `src/components/ui/`.
 
 ## Muhim konvensiyalar
 - Yangi selektor/amal qo'shsangiz: read → `state.ts`, write → `use-demo.ts` action.

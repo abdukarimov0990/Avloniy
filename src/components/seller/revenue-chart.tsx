@@ -40,29 +40,29 @@ export function RevenueChart({ courses }: { courses: ChartDatum[] }) {
         <BarChart data={data} margin={{ top: 4, right: 4, left: -16, bottom: 0 }}>
           <XAxis
             dataKey="short"
-            tick={{ fill: "#d8b796", fontSize: 11 }}
-            axisLine={{ stroke: "#532410" }}
+            tick={{ fill: "#a3a3a3", fontSize: 11 }}
+            axisLine={{ stroke: "#333333" }}
             tickLine={false}
           />
           <YAxis
             tickFormatter={(v) => formatCompact(Number(v))}
-            tick={{ fill: "#d8b796", fontSize: 11 }}
+            tick={{ fill: "#a3a3a3", fontSize: 11 }}
             axisLine={false}
             tickLine={false}
             width={44}
           />
           <Tooltip
-            cursor={{ fill: "#e5842318" }}
+            cursor={{ fill: "#ba3d0318" }}
             contentStyle={{
-              background: "#3d1202",
-              border: "1px solid #532410",
+              background: "#212121",
+              border: "1px solid #333333",
               borderRadius: 12,
-              color: "#fbeee0",
+              color: "#f5f5f5",
               fontSize: 12,
             }}
             formatter={(value) => [formatPrice(Number(value)), "Daromad"]}
           />
-          <Bar dataKey="revenue" fill="#e58423" radius={[6, 6, 0, 0]} />
+          <Bar dataKey="revenue" fill="#ba3d03" radius={[6, 6, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
     </div>

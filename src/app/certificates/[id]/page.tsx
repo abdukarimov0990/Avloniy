@@ -44,15 +44,15 @@ export default function CertificatePage() {
         <span className="text-sm text-muted">Sertifikat</span>
       </div>
 
-      <div className="relative overflow-hidden rounded-[var(--radius-xl)] border-2 border-gold bg-surface p-8 text-center print:min-h-screen print:rounded-none print:border-0 print:bg-white print:py-24">
-        <div className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-gold/10 print:hidden" />
-        <div className="pointer-events-none absolute -bottom-10 -left-10 h-32 w-32 rounded-full bg-gold/10 print:hidden" />
+      <div className="relative overflow-hidden rounded-[var(--radius-xl)] border-2 border-accent bg-surface p-8 text-center print:min-h-screen print:rounded-none print:border-0 print:bg-white print:py-24">
+        <div className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-accent/10 print:hidden" />
+        <div className="pointer-events-none absolute -bottom-10 -left-10 h-32 w-32 rounded-full bg-accent/10 print:hidden" />
 
         <div className="mb-6 flex justify-center">
           <Logo className="text-3xl print:text-black" />
         </div>
 
-        <span className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-gold text-surface">
+        <span className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-accent text-white">
           <Award size={32} />
         </span>
 
