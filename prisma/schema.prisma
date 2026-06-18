@@ -1,0 +1,486 @@
+// Avloniy ma'lumotlar modeli
+// PostgreSQL (Neon) + Prisma. Statistikalar shu jadvallardan hisoblanadi.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  BUYER
+  SELLER
+}
+
+enum ReferralStatus {
+  pending
+  paid
+}
+
+enum SubscriptionPlan {
+  monthly
+  yearly
+}
+
+enum SubscriptionStatus {
+  active
+  cancelled
+  expired
+}
+
+enum CoachingType {
+  one_to_one
+  group
+}
+
+enum BookingStatus {
+  pending
+  confirmed
+  cancelled
+}
+
+enum NotificationType {
+  NEW_COURSE
+  COMMENT_REPLY
+  LIKE
+  REFERRAL_EARNING
+  SUBSCRIPTION_EXPIRING
+  COACHING_BOOKING
+  TIP_RECEIVED
+  NEW_FOLLOWER
+  CERTIFICATE
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         Role
+  avatar       String?
+  bio          String?
+  category     String? // sotuvchi yo'nalishi (Dasturlash, Dizayn, ...)
+  createdAt    DateTime @default(now())
+
+  // Mavjud aloqalar
+  courses   Course[] // sotuvchi yaratgan kurslar
+  reels     Reel[] // sotuvchi joylagan reelslar
+  likes     Like[]
+  comments  Comment[]
+  purchases Purchase[] // xaridorning sotib olganlari
+
+  // Yangi aloqalar
+  lessonProgress    LessonProgress[]
+  certificates      Certificate[]
+  quizAttempts      QuizAttempt[]
+  streak            Streak?
+  savedReels        SavedReel[]
+  wishlist          Wishlist[]
+  promoCodes        PromoCode[] // sotuvchi yaratgan promo-kodlar
+  bundles           Bundle[] // sotuvchi to'plamlari
+  referralsMade     Referral[]         @relation("Referrer")
+  referralsGot      Referral[]         @relation("Referred")
+  subscriptions     Subscription[]     @relation("Subscriber") // o'zining obunalari
+  subscribers       Subscription[]     @relation("SubSeller") // unga obuna bo'lganlar
+  coachingProducts  CoachingProduct[]
+  coachingBookings  CoachingBooking[]
+  tipsSent          Tip[]              @relation("TipFrom")
+  tipsReceived      Tip[]              @relation("TipTo")
+  following         Follow[]           @relation("Follower") // u kuzatayotganlar
+  followers         Follow[]           @relation("Following") // uni kuzatayotganlar
+  notifications     Notification[]
+  communityMessages CommunityMessage[]
+  reviews           Review[]
+
+  @@index([role])
+}
+
+model Course {
+  id          String   @id @default(cuid())
+  sellerId    String
+  title       String
+  description String
+  price       Int // butun so'mda
+  category    String
+  coverImage  String?
+  hashtags    String[] @default([])
+  viewsCount  Int      @default(0)
+  salesCount  Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  seller         User               @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  lessons        Lesson[]
+  reels          Reel[]
+  purchases      Purchase[]
+  lessonProgress LessonProgress[]
+  certificates   Certificate[]
+  wishlistedBy   Wishlist[]
+  promoCodes     PromoCode[]
+  bundleCourses  BundleCourse[]
+  referrals      Referral[]
+  community      CommunityMessage[]
+  reviews        Review[]
+
+  @@index([sellerId])
+  @@index([category])
+}
+
+model Lesson {
+  id              String  @id @default(cuid())
+  courseId        String
+  title           String
+  videoUrl        String?
+  content         String?
+  order           Int
+  isFreePreview   Boolean @default(false)
+  unlockAfterDays Int     @default(0) // sotib olingandan necha kun keyin ochiladi (drip)
+
+  course   Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  progress LessonProgress[]
+  quizzes  Quiz[]
+
+  @@index([courseId])
+}
+
+model Reel {
+  id         String   @id @default(cuid())
+  sellerId   String
+  courseId   String
+  videoUrl   String
+  caption    String?
+  hashtags   String[] @default([])
+  likesCount Int      @default(0)
+  viewsCount Int      @default(0)
+  createdAt  DateTime @default(now())
+
+  seller   User        @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  course   Course      @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  likes    Like[]
+  comments Comment[]
+  saves    SavedReel[]
+  tips     Tip[]
+
+  @@index([sellerId])
+  @@index([courseId])
+}
+
+model Like {
+  id     String @id @default(cuid())
+  userId String
+  reelId String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reel Reel @relation(fields: [reelId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, reelId])
+  @@index([reelId])
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  userId    String
+  reelId    String
+  text      String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reel Reel @relation(fields: [reelId], references: [id], onDelete: Cascade)
+
+  @@index([reelId])
+}
+
+model Purchase {
+  id         String   @id @default(cuid())
+  buyerId    String
+  courseId   String
+  amountPaid Int
+  createdAt  DateTime @default(now())
+
+  buyer  User   @relation(fields: [buyerId], references: [id], onDelete: Cascade)
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([buyerId, courseId])
+  @@index([buyerId])
+}
+
+// --- BOSQICH 1: Buyer tajribasi ---
+
+model LessonProgress {
+  id             String    @id @default(cuid())
+  userId         String
+  lessonId       String
+  courseId       String
+  isCompleted    Boolean   @default(false)
+  watchedSeconds Int       @default(0)
+  completedAt    DateTime?
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, lessonId])
+  @@index([userId, courseId])
+}
+
+model Certificate {
+  id                String   @id @default(cuid())
+  userId            String
+  courseId          String
+  certificateNumber String   @unique
+  issuedAt          DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseId])
+}
+
+model Quiz {
+  id                 String @id @default(cuid())
+  lessonId           String
+  question           String
+  options            Json // string[] variantlar
+  correctOptionIndex Int
+
+  lesson   Lesson        @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  attempts QuizAttempt[]
+
+  @@index([lessonId])
+}
+
+model QuizAttempt {
+  id            String   @id @default(cuid())
+  userId        String
+  quizId        String
+  selectedIndex Int
+  isCorrect     Boolean
+  attemptedAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quiz Quiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
+
+  @@index([quizId])
+  @@index([userId])
+}
+
+model Streak {
+  id             String    @id @default(cuid())
+  userId         String    @unique
+  currentStreak  Int       @default(0)
+  longestStreak  Int       @default(0)
+  lastActiveDate DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model SavedReel {
+  id        String   @id @default(cuid())
+  userId    String
+  reelId    String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reel Reel @relation(fields: [reelId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, reelId])
+  @@index([userId])
+}
+
+model Wishlist {
+  id        String   @id @default(cuid())
+  userId    String
+  courseId  String
+  createdAt DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseId])
+  @@index([userId])
+}
+
+// --- BOSQICH 2: Seller biznes vositalari ---
+
+model PromoCode {
+  id              String    @id @default(cuid())
+  sellerId        String
+  code            String    @unique
+  discountPercent Int
+  expiresAt       DateTime?
+  usageLimit      Int?
+  usedCount       Int       @default(0)
+  courseId        String? // null bo'lsa — sotuvchining barcha kurslari uchun
+  createdAt       DateTime  @default(now())
+
+  seller User    @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  course Course? @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@index([sellerId])
+}
+
+model Bundle {
+  id          String   @id @default(cuid())
+  sellerId    String
+  title       String
+  description String
+  price       Int
+  coverImage  String?
+  createdAt   DateTime @default(now())
+
+  seller  User           @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  courses BundleCourse[]
+
+  @@index([sellerId])
+}
+
+model BundleCourse {
+  id       String @id @default(cuid())
+  bundleId String
+  courseId String
+
+  bundle Bundle @relation(fields: [bundleId], references: [id], onDelete: Cascade)
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([bundleId, courseId])
+}
+
+model Referral {
+  id               String         @id @default(cuid())
+  referrerUserId   String
+  referredUserId   String
+  courseId         String
+  commissionAmount Int
+  status           ReferralStatus @default(pending)
+  createdAt        DateTime       @default(now())
+
+  referrer User   @relation("Referrer", fields: [referrerUserId], references: [id], onDelete: Cascade)
+  referred User   @relation("Referred", fields: [referredUserId], references: [id], onDelete: Cascade)
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@index([referrerUserId])
+}
+
+// --- BOSQICH 3: Daromad modellari ---
+
+model Subscription {
+  id        String             @id @default(cuid())
+  userId    String
+  sellerId  String? // null — platforma obunasi
+  plan      SubscriptionPlan
+  status    SubscriptionStatus @default(active)
+  startedAt DateTime           @default(now())
+  expiresAt DateTime
+
+  user   User  @relation("Subscriber", fields: [userId], references: [id], onDelete: Cascade)
+  seller User? @relation("SubSeller", fields: [sellerId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model CoachingProduct {
+  id              String       @id @default(cuid())
+  sellerId        String
+  title           String
+  description     String
+  price           Int
+  durationMinutes Int
+  type            CoachingType
+  createdAt       DateTime     @default(now())
+
+  seller   User              @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  bookings CoachingBooking[]
+
+  @@index([sellerId])
+}
+
+model CoachingBooking {
+  id                String        @id @default(cuid())
+  buyerId           String
+  coachingProductId String
+  scheduledAt       DateTime
+  status            BookingStatus @default(pending)
+  createdAt         DateTime      @default(now())
+
+  buyer   User            @relation(fields: [buyerId], references: [id], onDelete: Cascade)
+  product CoachingProduct @relation(fields: [coachingProductId], references: [id], onDelete: Cascade)
+
+  @@index([coachingProductId])
+}
+
+model Tip {
+  id         String   @id @default(cuid())
+  fromUserId String
+  toSellerId String
+  reelId     String?
+  amount     Int
+  createdAt  DateTime @default(now())
+
+  from User  @relation("TipFrom", fields: [fromUserId], references: [id], onDelete: Cascade)
+  to   User  @relation("TipTo", fields: [toSellerId], references: [id], onDelete: Cascade)
+  reel Reel? @relation(fields: [reelId], references: [id], onDelete: Cascade)
+
+  @@index([toSellerId])
+}
+
+// --- BOSQICH 4: Ijtimoiy / jamoa ---
+
+model Follow {
+  id                String   @id @default(cuid())
+  followerId        String
+  followingSellerId String
+  createdAt         DateTime @default(now())
+
+  follower  User @relation("Follower", fields: [followerId], references: [id], onDelete: Cascade)
+  following User @relation("Following", fields: [followingSellerId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingSellerId])
+  @@index([followingSellerId])
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  body      String
+  isRead    Boolean          @default(false)
+  relatedId String?
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model CommunityMessage {
+  id        String   @id @default(cuid())
+  courseId  String
+  userId    String
+  text      String
+  createdAt DateTime @default(now())
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([courseId])
+}
+
+// --- BOSQICH 5: Review / rating ---
+
+model Review {
+  id        String   @id @default(cuid())
+  userId    String
+  courseId  String
+  rating    Int // 1..5
+  comment   String?
+  createdAt DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseId])
+  @@index([courseId])
+}
