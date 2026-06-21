@@ -36,6 +36,9 @@ interface Actions {
   createReel: (data: { courseId: string; caption?: string; videoUrl?: string }) => { id: string } | null;
   addQuiz: (lessonId: string, data: { question: string; options: string[]; correctOptionIndex: number }) => { ok: boolean } | null;
   setOnboarding: (category: string, bio: string | null) => void;
+  createChannelPost: (data: { type: "text" | "video"; text: string; videoUrl?: string }) => { id: string } | null;
+  toggleChannelPostLike: (postId: string) => void;
+  addChannelComment: (postId: string, text: string) => FeedComment | null;
 }
 
 type Store = DemoState & Actions;
@@ -258,6 +261,49 @@ export const useDemo = create<Store>()(
         set((s) => ({
           onboarding: [...s.onboarding.filter((o) => o.userId !== uid), { userId: uid, category, bio }],
         }));
+      },
+
+      createChannelPost: (data) => {
+        const uid = get().currentUserId;
+        if (!uid) return null;
+        const id = `cp-${get().seq}`;
+        const post: D.DemoChannelPost = {
+          id,
+          sellerId: uid,
+          type: data.type,
+          text: data.text,
+          videoUrl: data.type === "video" ? data.videoUrl || D.DEFAULT_VIDEO : null,
+          pinned: false,
+          likesCount: 0,
+          createdAt: nowISO(),
+        };
+        set((s) => ({ channelPosts: [...s.channelPosts, post], seq: s.seq + 1 }));
+        return { id };
+      },
+
+      toggleChannelPostLike: (postId) => {
+        const uid = get().currentUserId;
+        if (!uid) return;
+        const key = `${uid}:${postId}`;
+        set((s) => {
+          const has = s.channelLikes.includes(key);
+          return {
+            channelLikes: has ? s.channelLikes.filter((k) => k !== key) : [...s.channelLikes, key],
+            channelPosts: s.channelPosts.map((p) =>
+              p.id === postId ? { ...p, likesCount: Math.max(0, p.likesCount + (has ? -1 : 1)) } : p
+            ),
+          };
+        });
+      },
+
+      addChannelComment: (postId, text) => {
+        const uid = get().currentUserId;
+        if (!uid) return null;
+        const id = `cc-${get().seq}`;
+        const comment = { id, postId, userId: uid, text, createdAt: nowISO() };
+        set((s) => ({ channelComments: [...s.channelComments, comment], seq: s.seq + 1 }));
+        const u = get().users.find((x) => x.id === uid)!;
+        return { id, text, createdAt: comment.createdAt, user: { id: u.id, name: u.name, avatar: u.avatar } };
       },
     }),
     {

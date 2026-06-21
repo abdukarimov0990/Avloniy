@@ -254,3 +254,95 @@ export const INITIAL_SAVED: { userId: string; reelId: string }[] = [
 export const INITIAL_WISHLIST: { userId: string; courseId: string }[] = [
   { userId: "u-ali", courseId: "c-react" },
 ];
+
+// --- Kanal (Messenger) postlari ---
+// Har bir sotuvchi = bitta shaxsiy kanal. Kursini sotib olgan a'zo bo'ladi.
+export interface DemoChannelPost {
+  id: string;
+  sellerId: string;
+  type: "text" | "video";
+  text: string;
+  videoUrl: string | null;
+  pinned: boolean;
+  likesCount: number;
+  createdAt: string;
+}
+
+export const CHANNEL_POSTS: DemoChannelPost[] = [
+  // Aziz — Dasturlash kanali
+  {
+    id: "cp-aziz-1",
+    sellerId: "u-aziz",
+    type: "text",
+    text: "Kanalga xush kelibsiz! 🎉 Bu yerda qo'shimcha materiallar, yangiliklar va savol-javoblar bo'ladi. Savollaringizni bemalol yozing!",
+    videoUrl: null,
+    pinned: true,
+    likesCount: 42,
+    createdAt: "2026-06-16T08:00:00.000Z",
+  },
+  {
+    id: "cp-aziz-2",
+    sellerId: "u-aziz",
+    type: "video",
+    text: "Bonus dars: VS Code'ni dasturchi uchun sozlash 🛠️ (faqat kanal a'zolari uchun)",
+    videoUrl: DEFAULT_VIDEO,
+    pinned: false,
+    likesCount: 28,
+    createdAt: "2026-06-18T10:30:00.000Z",
+  },
+  {
+    id: "cp-aziz-3",
+    sellerId: "u-aziz",
+    type: "text",
+    text: "Ertaga soat 20:00 da jonli efirda React savollariga javob beraman. Savollaringizni izohga yozib qoldiring! 💬",
+    videoUrl: null,
+    pinned: false,
+    likesCount: 17,
+    createdAt: "2026-06-20T15:00:00.000Z",
+  },
+  // Dilnoza — Dizayn kanali
+  {
+    id: "cp-dilnoza-1",
+    sellerId: "u-dilnoza",
+    type: "text",
+    text: "Salom, dizaynerlar! 🎨 Har hafta yangi Figma maslahatlari va bepul shablonlar shu yerda.",
+    videoUrl: null,
+    pinned: true,
+    likesCount: 35,
+    createdAt: "2026-06-16T09:00:00.000Z",
+  },
+  {
+    id: "cp-dilnoza-2",
+    sellerId: "u-dilnoza",
+    type: "video",
+    text: "Tezkor maslahat: 8pt grid tizimi bilan ishlash 📐",
+    videoUrl: DEFAULT_VIDEO,
+    pinned: false,
+    likesCount: 21,
+    createdAt: "2026-06-19T12:00:00.000Z",
+  },
+  // Sardor — Marketing kanali
+  {
+    id: "cp-sardor-1",
+    sellerId: "u-sardor",
+    type: "text",
+    text: "Marketing kanaliga xush kelibsiz! 📈 Real case'lar va strategiyalar bilan o'rtoqlashaman.",
+    videoUrl: null,
+    pinned: true,
+    likesCount: 19,
+    createdAt: "2026-06-17T11:00:00.000Z",
+  },
+  {
+    id: "cp-sardor-2",
+    sellerId: "u-sardor",
+    type: "text",
+    text: "Yangi case study: 0 dan 10 000 followergacha 30 kunda. To'liq strategiya keyingi postda! 🚀",
+    videoUrl: null,
+    pinned: false,
+    likesCount: 24,
+    createdAt: "2026-06-20T16:00:00.000Z",
+  },
+];
+
+// Demo: ali (u-ali) bir nechta postlarni yoqtirgan
+export const INITIAL_CHANNEL_LIKES: { userId: string; postId: string }[] = [];

@@ -86,7 +86,10 @@ export default function CoursePage() {
             </div>
           )}
 
-          <div className="mt-4 flex items-center gap-3 rounded-[var(--radius-md)] border border-border bg-surface p-3">
+          <Link
+            href={`/channels/${course.seller.id}`}
+            className="mt-4 flex items-center gap-3 rounded-[var(--radius-md)] border border-border bg-surface p-3 transition active:scale-[0.99]"
+          >
             {course.seller.avatar ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -101,11 +104,9 @@ export default function CoursePage() {
             )}
             <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold text-foreground">{course.seller.name}</p>
-              {course.seller.bio && (
-                <p className="truncate text-xs text-muted">{course.seller.bio}</p>
-              )}
+              <p className="truncate text-xs text-accent">Kanalni ochish →</p>
             </div>
-          </div>
+          </Link>
 
           {course.purchased && (
             <div className="mt-4 rounded-[var(--radius-md)] border border-border bg-surface p-4">

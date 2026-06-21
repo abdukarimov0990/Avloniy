@@ -31,6 +31,9 @@ export interface DemoState {
   streaks: { userId: string; currentStreak: number; longestStreak: number; lastActiveDate: string | null }[];
   attempts: { userId: string; quizId: string; selectedIndex: number; isCorrect: boolean }[];
   onboarding: { userId: string; category: string; bio: string | null }[];
+  channelPosts: D.DemoChannelPost[];
+  channelLikes: string[]; // `${userId}:${postId}`
+  channelComments: { id: string; postId: string; userId: string; text: string; createdAt: string }[];
   seq: number;
 }
 
@@ -52,6 +55,9 @@ export function initialState(): DemoState {
     streaks: [],
     attempts: [],
     onboarding: [],
+    channelPosts: D.CHANNEL_POSTS.map((p) => ({ ...p })),
+    channelLikes: D.INITIAL_CHANNEL_LIKES.map((l) => `${l.userId}:${l.postId}`),
+    channelComments: [],
     seq: 1,
   };
 }
@@ -443,6 +449,169 @@ export function selectSellerCourse(st: DemoState, courseId: string, sellerId: st
       .filter((r) => r.courseId === courseId)
       .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
       .map((r) => ({ id: r.id, caption: r.caption, viewsCount: r.viewsCount, likesCount: r.likesCount })),
+  };
+}
+
+// --- Kanal (Messenger) ---
+
+/** Foydalanuvchi sotuvchining kanaliga a'zomi (uning biror kursini sotib olgan bo'lsa) */
+export function isChannelMember(st: DemoState, userId: string, sellerId: string): boolean {
+  return st.purchases.some(
+    (p) => p.buyerId === userId && courseById(st, p.courseId)?.sellerId === sellerId
+  );
+}
+
+/** Kanal a'zolari soni (sotuvchidan kurs olgan noyob xaridorlar) */
+export function channelMemberCount(st: DemoState, sellerId: string): number {
+  const set = new Set<string>();
+  for (const p of st.purchases) {
+    if (courseById(st, p.courseId)?.sellerId === sellerId) set.add(p.buyerId);
+  }
+  return set.size;
+}
+
+export interface ChannelSummary {
+  id: string; // sellerId
+  name: string;
+  avatar: string | null;
+  category: string | null;
+  bio: string | null;
+  coursesCount: number;
+  membersCount: number;
+  postsCount: number;
+  isMember: boolean;
+}
+
+export interface ChannelPostView {
+  id: string;
+  sellerId: string;
+  sellerName: string;
+  sellerAvatar: string | null;
+  type: "text" | "video";
+  text: string;
+  videoUrl: string | null;
+  pinned: boolean;
+  createdAt: string;
+  likesCount: number;
+  likedByMe: boolean;
+  commentsCount: number;
+}
+
+function channelSummary(st: DemoState, seller: D.DemoUser, userId?: string): ChannelSummary {
+  const pub = publicUser(st, seller.id)!;
+  return {
+    id: seller.id,
+    name: seller.name,
+    avatar: seller.avatar,
+    category: pub.category,
+    bio: pub.bio,
+    coursesCount: st.courses.filter((c) => c.sellerId === seller.id).length,
+    membersCount: channelMemberCount(st, seller.id),
+    postsCount: st.channelPosts.filter((p) => p.sellerId === seller.id).length,
+    isMember: !!userId && isChannelMember(st, userId, seller.id),
+  };
+}
+
+function postView(st: DemoState, p: D.DemoChannelPost, userId?: string): ChannelPostView {
+  const seller = userById(st, p.sellerId)!;
+  return {
+    id: p.id,
+    sellerId: p.sellerId,
+    sellerName: seller.name,
+    sellerAvatar: seller.avatar,
+    type: p.type,
+    text: p.text,
+    videoUrl: p.videoUrl,
+    pinned: p.pinned,
+    createdAt: p.createdAt,
+    likesCount: p.likesCount,
+    likedByMe: !!userId && st.channelLikes.includes(`${userId}:${p.id}`),
+    commentsCount: st.channelComments.filter((c) => c.postId === p.id).length,
+  };
+}
+
+/** Barcha kanallar (discovery) — qidiruv/kategoriya bo'yicha filtr */
+export function selectChannels(
+  st: DemoState,
+  userId?: string,
+  opts?: { query?: string; category?: string }
+): ChannelSummary[] {
+  const q = (opts?.query ?? "").trim().toLowerCase();
+  const cat = opts?.category ?? "";
+  return st.users
+    .filter((u) => u.role === "SELLER")
+    .map((u) => channelSummary(st, u, userId))
+    .filter((c) => (cat ? c.category === cat : true))
+    .filter((c) => (q ? c.name.toLowerCase().includes(q) || (c.category ?? "").toLowerCase().includes(q) : true))
+    .sort((a, b) => b.membersCount - a.membersCount);
+}
+
+/** Foydalanuvchi a'zo bo'lgan kanallar */
+export function selectMyChannels(st: DemoState, userId: string): ChannelSummary[] {
+  return selectChannels(st, userId).filter((c) => c.isMember);
+}
+
+export interface ChannelDetail extends ChannelSummary {
+  posts: ChannelPostView[];
+  courses: { id: string; title: string; price: number; coverImage: string | null }[];
+}
+
+/** Bitta kanal sahifasi (a'zo bo'lsa postlar, bo'lmasa qulflangan) */
+export function selectChannel(st: DemoState, sellerId: string, userId?: string): ChannelDetail | null {
+  const seller = userById(st, sellerId);
+  if (!seller || seller.role !== "SELLER") return null;
+  const summary = channelSummary(st, seller, userId);
+  const posts = st.channelPosts
+    .filter((p) => p.sellerId === sellerId)
+    .map((p) => postView(st, p, userId))
+    .sort((a, b) => {
+      if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
+      return a.createdAt < b.createdAt ? 1 : -1;
+    });
+  const courses = st.courses
+    .filter((c) => c.sellerId === sellerId)
+    .map((c) => ({ id: c.id, title: c.title, price: c.price, coverImage: c.coverImage }));
+  return { ...summary, posts, courses };
+}
+
+/** "Mening kanallarim" birlashgan lentasi — a'zo kanallar postlari (eng yangisi tepada) */
+export function selectMyChannelFeed(st: DemoState, userId: string): ChannelPostView[] {
+  return st.channelPosts
+    .filter((p) => isChannelMember(st, userId, p.sellerId))
+    .map((p) => postView(st, p, userId))
+    .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+}
+
+/** Kanal posti izohlari */
+export function selectChannelPostComments(st: DemoState, postId: string): FeedComment[] {
+  return st.channelComments
+    .filter((c) => c.postId === postId)
+    .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
+    .map((c) => {
+      const u = userById(st, c.userId)!;
+      return { id: c.id, text: c.text, createdAt: c.createdAt, user: { id: u.id, name: u.name, avatar: u.avatar } };
+    });
+}
+
+export interface SellerChannelView {
+  membersCount: number;
+  postsCount: number;
+  posts: ChannelPostView[];
+}
+
+/** Sotuvchining o'z kanali (boshqaruv) */
+export function selectSellerChannel(st: DemoState, sellerId: string): SellerChannelView {
+  const posts = st.channelPosts
+    .filter((p) => p.sellerId === sellerId)
+    .map((p) => postView(st, p, sellerId))
+    .sort((a, b) => {
+      if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
+      return a.createdAt < b.createdAt ? 1 : -1;
+    });
+  return {
+    membersCount: channelMemberCount(st, sellerId),
+    postsCount: posts.length,
+    posts,
   };
 }
 

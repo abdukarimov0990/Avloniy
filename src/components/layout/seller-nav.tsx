@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, PlusSquare, Store } from "lucide-react";
+import { LayoutDashboard, Radio, PlusSquare, Store } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const ITEMS = [
   { href: "/dashboard", label: "Statistika", Icon: LayoutDashboard, exact: true },
+  { href: "/channel", label: "Kanal", Icon: Radio, exact: true },
   { href: "/studio/new", label: "Yaratish", Icon: PlusSquare, exact: true },
   { href: "/studio", label: "Profil", Icon: Store, exact: false },
 ];

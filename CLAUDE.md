@@ -71,6 +71,17 @@ Doimo dark mavzu. UI primitivlar: `src/components/ui/`.
 - **Keyingi: kengaytirish BOSQICH 2** — seller biznes (promo-kod, bundle, free-preview/drip, referral).
   BOSQICH 3 (obuna/coaching/tip), 4 (follow/bildirishnoma/chat), 5 (qidiruv/algoritm/review).
 
+## Kanal / Messenger (MVP) ✅
+Har bir sotuvchi = bitta **shaxsiy kanal**. Kursini sotib olgan avtomatik **a'zo** bo'ladi.
+- Ma'lumot: `data.ts` `CHANNEL_POSTS` (seed), `state.ts` `channelPosts/channelLikes/channelComments`
+  + selektorlar (`selectChannels`, `selectChannel`, `selectMyChannelFeed`, `selectSellerChannel`,
+  `isChannelMember`, `channelMemberCount`). Amallar: `createChannelPost/toggleChannelPostLike/addChannelComment`.
+- Buyer: `/channels` (discovery — qidiruv + kategoriya + "mening kanallarim" lentasi),
+  `/channels/[id]` (a'zo → postlar; a'zo emas → qulflangan + kurslar). Pastki navga "Kanallar" qo'shildi.
+- Seller: `/channel` (a'zolar/postlar statistikasi + `PostComposer` (matn/video post) + postlar). Navga "Kanal".
+- Komponentlar: `components/channel/` (`channel-post-card`, `channel-feed`, `channel-comments-sheet`, `post-composer`).
+- Kross-havola: kurs sahifasida sotuvchi → "Kanalni ochish".
+
 ## Kengaytirish schema (qo'shildi, additive)
 20+ yangi model BOSQICH 1–5 uchun (LessonProgress, Certificate, Quiz, QuizAttempt, Streak,
 SavedReel, Wishlist, PromoCode, Bundle, BundleCourse, Referral, Subscription, CoachingProduct,
