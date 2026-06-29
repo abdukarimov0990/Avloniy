@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { ShoppingBag, ChevronRight, Layers } from "lucide-react";
+import { Layers } from "lucide-react";
 import { useDemo } from "@/lib/demo/use-demo";
 import { currentUser, selectCoursesByCategory } from "@/lib/demo/state";
 import { BackButton } from "@/components/layout/back-button";
+import { MarketCard } from "@/components/courses/market-card";
 import { buttonVariants } from "@/components/ui/button";
-import { cn, formatCompact, formatPrice } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 
 export default function CategoryPage() {
   const params = useParams<{ category: string }>();
@@ -38,29 +39,9 @@ export default function CategoryPage() {
       ) : (
         <>
           <p className="mb-3 text-sm text-muted">{courses.length} ta kurs — eng ko&apos;p sotilgani tepada</p>
-          <div className="flex flex-col gap-2">
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
             {courses.map((c) => (
-              <Link
-                key={c.id}
-                href={`/courses/${c.id}`}
-                className="flex items-center gap-3 rounded-[var(--radius-lg)] border border-border bg-surface p-3 transition active:scale-[0.99]"
-              >
-                <div className="h-16 w-16 shrink-0 overflow-hidden rounded-[var(--radius-md)] bg-surface-2">
-                  {c.coverImage && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={c.coverImage} alt={c.title} className="h-full w-full object-cover" />
-                  )}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold text-foreground">{c.title}</p>
-                  <p className="text-xs text-muted">{c.sellerName}</p>
-                  <p className="mt-1 flex items-center gap-3 text-xs text-subtle">
-                    <span className="font-bold text-accent">{formatPrice(c.price)}</span>
-                    <span className="flex items-center gap-1"><ShoppingBag size={12} /> {formatCompact(c.salesCount)} sotuv</span>
-                  </p>
-                </div>
-                <ChevronRight size={20} className="text-subtle" />
-              </Link>
+              <MarketCard key={c.id} c={c} />
             ))}
           </div>
         </>

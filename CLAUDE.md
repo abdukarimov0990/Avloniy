@@ -33,11 +33,19 @@ Tokenlar `globals.css` `@theme`da: `background`/`surface`/`surface-2`, `accent`/
 `foreground`/`muted`/`subtle`, `border`. `success`=accent, `danger`=mahogany oilasi (boshqa rang yo'q).
 Doimo dark mavzu. UI primitivlar: `src/components/ui/`.
 
-## Kashf qilish (Discover)
+## Kashf qilish (Discover) + Marketplace
 Buyer nav'da **Kashf** tab (`/discover`): 🔥 Top kurslar (eng ko'p sotilgan + trend kategoriya),
 Kategoriyalar (mashhurlik bo'yicha → `/discover/[category]` alohida sahifa), Top kreatorlar
-(sotuv bo'yicha → kanal), Barcha kurslar (reyting bilan). Selektorlar `state.ts`:
-`selectTopCourses`, `selectCategoriesRanked`, `selectCoursesByCategory`, `selectTopCreators`, `selectAllCourses`.
+(sotuv bo'yicha → kanal), **Barcha kurslar — marketplace grid** (`MarketCard`: kurs reel videosi
+hover'да o'ynaydi, video yo'qsa muqova rasm; grid `grid-cols-2 lg:grid-cols-3`).
+Selektorlar `state.ts`: `selectTopCourses`, `selectCategoriesRanked`, `selectCoursesByCategory`,
+`selectTopCreators`, `selectAllCourses` (`DiscoverCourse.previewVideo` — kursning reel videosi).
+
+## Responsive (mobil + desktop)
+Mobil — hozirgidek (430px shell + pastki tab nav). **Desktop (lg≥1024px):** `components/layout/sidebar.tsx`
+chap yon panel (rolga qarab nav), pastki nav `lg:hidden`. Buyer/seller layout: `lg:flex lg:max-w-[1180px]`
+(sidebar + keng kontent). Brauzing gridlar `lg:grid-cols-2/3`. Reels feed desktop'да `lg:max-w-[460px]` (tor).
+Standalone sahifalar (kurs/chat/inbox...) markazlashgan ustun bo'lib qoladi.
 
 ## UX
 - Pastki nav 5 bo'lim (buyer: Lenta/Kanallar/Xabarlar/Kurslarim/Profil; seller: Statistika/Kanal/Xabarlar/Yaratish/Profil),

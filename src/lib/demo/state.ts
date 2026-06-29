@@ -882,22 +882,27 @@ export interface DiscoverCourse {
   id: string;
   title: string;
   coverImage: string | null;
+  previewVideo: string | null; // kursning reel videosi (bo'lsa)
   price: number;
   category: string;
   sellerId: string;
   sellerName: string;
+  sellerAvatar: string | null;
   salesCount: number;
 }
 
 function toDiscover(st: DemoState, c: D.DemoCourse): DiscoverCourse {
+  const seller = userById(st, c.sellerId);
   return {
     id: c.id,
     title: c.title,
     coverImage: c.coverImage,
+    previewVideo: st.reels.find((r) => r.courseId === c.id)?.videoUrl ?? null,
     price: c.price,
     category: c.category,
     sellerId: c.sellerId,
-    sellerName: userById(st, c.sellerId)?.name ?? "",
+    sellerName: seller?.name ?? "",
+    sellerAvatar: seller?.avatar ?? null,
     salesCount: c.salesCount,
   };
 }

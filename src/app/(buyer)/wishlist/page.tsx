@@ -35,7 +35,7 @@ export default function WishlistPage() {
           </p>
         </div>
       ) : (
-        <div className="flex flex-col gap-3">
+        <div className="grid gap-3 lg:grid-cols-2">
           {courses.map((course) => (
             <Link
               key={course.id}

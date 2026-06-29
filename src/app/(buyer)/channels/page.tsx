@@ -130,7 +130,7 @@ export default function ChannelsPage() {
             Kanal topilmadi.
           </p>
         ) : (
-          <div className="flex flex-col gap-2">
+          <div className="grid gap-2 lg:grid-cols-2">
             {channels.map((ch) => (
               <ChannelCard key={ch.id} ch={ch} />
             ))}

@@ -12,6 +12,7 @@ import {
   type DiscoverCourse,
 } from "@/lib/demo/state";
 import { HeaderActions } from "@/components/layout/header-actions";
+import { MarketCard } from "@/components/courses/market-card";
 import { formatCompact, formatPrice } from "@/lib/utils";
 
 /** Gorizontal kichik kurs kartasi */
@@ -32,32 +33,6 @@ function CourseTile({ c }: { c: DiscoverCourse }) {
           <ShoppingBag size={11} /> {formatCompact(c.salesCount)}
         </span>
       </div>
-    </Link>
-  );
-}
-
-/** Vertikal ro'yxat kartasi */
-function CourseRow({ c, rank }: { c: DiscoverCourse; rank?: number }) {
-  return (
-    <Link href={`/courses/${c.id}`} className="flex items-center gap-3 rounded-[var(--radius-lg)] border border-border bg-surface p-3 transition active:scale-[0.99]">
-      {rank !== undefined && (
-        <span className="w-5 shrink-0 text-center text-base font-extrabold text-accent">{rank}</span>
-      )}
-      <div className="h-16 w-16 shrink-0 overflow-hidden rounded-[var(--radius-md)] bg-surface-2">
-        {c.coverImage && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={c.coverImage} alt={c.title} className="h-full w-full object-cover" />
-        )}
-      </div>
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-semibold text-foreground">{c.title}</p>
-        <p className="text-xs text-muted">{c.sellerName} • {c.category}</p>
-        <p className="mt-1 flex items-center gap-3 text-xs text-subtle">
-          <span className="font-bold text-accent">{formatPrice(c.price)}</span>
-          <span className="flex items-center gap-1"><ShoppingBag size={12} /> {formatCompact(c.salesCount)} sotuv</span>
-        </p>
-      </div>
-      <ChevronRight size={20} className="text-subtle" />
     </Link>
   );
 }
@@ -140,14 +115,14 @@ export default function DiscoverPage() {
         </div>
       </section>
 
-      {/* Barcha kurslar */}
+      {/* Barcha kurslar — marketplace grid */}
       <section className="mt-7">
         <h2 className="mb-3 flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-subtle">
           <BookOpen size={15} /> Barcha kurslar ({all.length})
         </h2>
-        <div className="flex flex-col gap-2">
-          {all.map((c, i) => (
-            <CourseRow key={c.id} c={c} rank={i + 1} />
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
+          {all.map((c) => (
+            <MarketCard key={c.id} c={c} />
           ))}
         </div>
       </section>

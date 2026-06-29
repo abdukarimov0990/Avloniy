@@ -22,7 +22,7 @@ export function SellerNav() {
   const unread = user ? selectMyDmThreads(st, user.id).reduce((s, t) => s + t.unread, 0) : 0;
 
   return (
-    <nav className="z-30 flex h-16 shrink-0 items-stretch border-t border-border bg-surface">
+    <nav className="z-30 flex h-16 shrink-0 items-stretch border-t border-border bg-surface lg:hidden">
       {ITEMS.map(({ href, label, Icon, exact, badge }) => {
         const active = exact ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
         const isStudioProfile = href === "/studio" && pathname.startsWith("/studio/new");
