@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useDemo } from "@/lib/demo/use-demo";
 import { Logo } from "@/components/brand/logo";
+import { Toaster } from "@/components/ui/toaster";
 
 /**
  * localStorage'дан holatni qayta tiklaydi (rehydrate) va shu tugaguncha splash ko'rsatadi.
@@ -31,5 +32,10 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
     );
   }
 
-  return <>{children}</>;
+  return (
+    <>
+      {children}
+      <Toaster />
+    </>
+  );
 }

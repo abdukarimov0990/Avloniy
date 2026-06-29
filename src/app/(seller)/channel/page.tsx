@@ -1,6 +1,7 @@
 "use client";
 
-import { Users, FileText, Radio } from "lucide-react";
+import Link from "next/link";
+import { Users, FileText, Radio, ChevronRight } from "lucide-react";
 import { useDemo } from "@/lib/demo/use-demo";
 import { currentUser, selectSellerChannel } from "@/lib/demo/state";
 import { Logo } from "@/components/brand/logo";
@@ -26,13 +27,16 @@ export default function SellerChannelPage() {
 
       {/* Statistika */}
       <div className="grid grid-cols-2 gap-3">
-        <div className="rounded-[var(--radius-lg)] border border-border bg-surface p-4">
+        <Link href="/channel/members" className="rounded-[var(--radius-lg)] border border-border bg-surface p-4 transition active:scale-[0.99]">
           <span className="flex h-9 w-9 items-center justify-center rounded-full bg-surface-2 text-accent">
             <Users size={18} />
           </span>
-          <p className="mt-3 text-xl font-extrabold text-foreground">{formatCompact(channel.membersCount)}</p>
-          <p className="text-xs text-muted">A&apos;zolar (kurs olganlar)</p>
-        </div>
+          <p className="mt-3 flex items-center gap-1 text-xl font-extrabold text-foreground">
+            {formatCompact(channel.membersCount)}
+            <ChevronRight size={16} className="text-subtle" />
+          </p>
+          <p className="text-xs text-muted">A&apos;zolar — boshqarish</p>
+        </Link>
         <div className="rounded-[var(--radius-lg)] border border-border bg-surface p-4">
           <span className="flex h-9 w-9 items-center justify-center rounded-full bg-surface-2 text-accent">
             <FileText size={18} />

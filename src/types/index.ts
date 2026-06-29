@@ -17,6 +17,8 @@ export interface PublicUser {
   avatar: string | null;
   bio: string | null;
   category: string | null;
+  username: string;
+  privateMessagePrice: number;
 }
 
 /** Reels lentasidagi bitta reel (kurs va sotuvchi bilan) */

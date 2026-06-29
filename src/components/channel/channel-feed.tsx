@@ -6,7 +6,7 @@ import { ChannelPostCard } from "@/components/channel/channel-post-card";
 import { ChannelCommentsSheet } from "@/components/channel/channel-comments-sheet";
 import type { ChannelPostView } from "@/lib/demo/state";
 
-/** Kanal postlari ro'yxati + like/izoh (store bilan ulangan). Qayta ishlatiladi. */
+/** Kanal postlari ro'yxati + reaksiya/izoh/boshqaruv (store bilan ulangan). */
 export function ChannelFeed({
   posts,
   showSeller = false,
@@ -16,7 +16,10 @@ export function ChannelFeed({
   showSeller?: boolean;
   empty?: React.ReactNode;
 }) {
-  const toggleLike = useDemo((s) => s.toggleChannelPostLike);
+  const reactToPost = useDemo((s) => s.reactToPost);
+  const pinPost = useDemo((s) => s.pinPost);
+  const editPost = useDemo((s) => s.editPost);
+  const deletePost = useDemo((s) => s.deletePost);
   const [commentsPostId, setCommentsPostId] = useState<string | null>(null);
 
   if (posts.length === 0 && empty) return <>{empty}</>;
@@ -29,8 +32,11 @@ export function ChannelFeed({
             key={p.id}
             post={p}
             showSeller={showSeller}
-            onLike={toggleLike}
+            onReact={reactToPost}
             onOpenComments={setCommentsPostId}
+            onPin={pinPost}
+            onEdit={editPost}
+            onDelete={deletePost}
           />
         ))}
       </div>

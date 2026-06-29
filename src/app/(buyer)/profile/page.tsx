@@ -42,6 +42,7 @@ export default function ProfilePage() {
         )}
         <div className="text-center">
           <p className="text-lg font-bold text-foreground">{user.name}</p>
+          <p className="text-sm text-muted">@{user.username}</p>
           <span className="mt-1 inline-block rounded-full bg-accent-soft px-3 py-0.5 text-xs font-semibold text-accent">
             Xaridor
           </span>

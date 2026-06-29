@@ -9,9 +9,9 @@ const geistSans = Geist({
 });
 
 export const metadata: Metadata = {
-  title: "Avloniy — Bilim sotib oling",
+  title: "Ilmy — Bilim sotib oling",
   description:
-    "Avloniy — qisqa videolar orqali eng yaxshi online kurslarni kashf eting va sotib oling.",
+    "Ilmy — qisqa videolar orqali eng yaxshi online kurslarni kashf eting va sotib oling.",
 };
 
 export const viewport: Viewport = {

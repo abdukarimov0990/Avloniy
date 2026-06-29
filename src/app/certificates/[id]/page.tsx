@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { ArrowLeft, Award } from "lucide-react";
+import { Award } from "lucide-react";
+import { BackButton } from "@/components/layout/back-button";
 import { selectCertificate } from "@/lib/demo/state";
 import { useGuard } from "@/lib/demo/hooks";
 import { Logo } from "@/components/brand/logo";
@@ -35,12 +36,7 @@ export default function CertificatePage() {
   return (
     <div className="mx-auto min-h-dvh w-full max-w-[var(--width-shell)] bg-background px-5 py-6 print:max-w-none print:bg-white print:p-0">
       <div className="mb-5 flex items-center justify-between print:hidden">
-        <Link
-          href="/profile"
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-surface-2 text-muted"
-        >
-          <ArrowLeft size={20} />
-        </Link>
+        <BackButton fallback="/profile" />
         <span className="text-sm text-muted">Sertifikat</span>
       </div>
 

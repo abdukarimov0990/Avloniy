@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ShoppingBag, Loader2, Check, CreditCard, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useDemo } from "@/lib/demo/use-demo";
+import { useToast } from "@/lib/toast";
 import { formatPrice } from "@/lib/utils";
 
 type Stage = "idle" | "confirm" | "processing" | "done";
@@ -20,6 +21,7 @@ export function CoursePurchase({
   price: number;
 }) {
   const purchase = useDemo((s) => s.purchase);
+  const toast = useToast((s) => s.show);
   const [stage, setStage] = useState<Stage>("idle");
 
   async function handlePay() {
@@ -29,6 +31,7 @@ export function CoursePurchase({
     await wait(1200);
     // Store yangilanadi → kurs sahifasi qayta chiziladi, bu panel yo'qoladi.
     purchase(courseId);
+    toast("To'lov muvaffaqiyatli — kanalga qo'shildingiz! 🎉");
   }
 
   return (

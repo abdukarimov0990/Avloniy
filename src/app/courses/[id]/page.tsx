@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { ArrowLeft, Eye, Users, PlayCircle, Award } from "lucide-react";
+import { Eye, Users, PlayCircle, Award } from "lucide-react";
+import { BackButton } from "@/components/layout/back-button";
 import { selectCourseDetail } from "@/lib/demo/state";
 import { useGuard } from "@/lib/demo/hooks";
 import { MobileShell } from "@/components/layout/mobile-shell";
@@ -45,12 +46,7 @@ export default function CoursePage() {
             />
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/30 to-black/30" />
-          <Link
-            href="/feed"
-            className="absolute left-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm"
-          >
-            <ArrowLeft size={20} />
-          </Link>
+          <BackButton fallback="/feed" className="absolute left-4 top-4 bg-black/40 text-white backdrop-blur-sm" />
           <span className="absolute left-4 top-4 ml-12 rounded-full bg-accent/90 px-3 py-1 text-xs font-semibold text-white">
             {course.category}
           </span>

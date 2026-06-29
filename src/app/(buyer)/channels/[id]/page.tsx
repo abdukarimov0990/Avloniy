@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { ArrowLeft, BookOpen, FileText, Lock, Check, ChevronRight } from "lucide-react";
+import { BookOpen, FileText, Lock, Check, ChevronRight, MessageCircle } from "lucide-react";
+import { BackButton } from "@/components/layout/back-button";
 import { useDemo } from "@/lib/demo/use-demo";
 import { currentUser, selectChannel } from "@/lib/demo/state";
 import { ChannelFeed } from "@/components/channel/channel-feed";
@@ -39,9 +40,7 @@ export default function ChannelPage() {
   return (
     <div className="h-full overflow-y-auto px-5 pb-6">
       <header className="flex items-center gap-3 py-5">
-        <Link href="/channels" className="flex h-9 w-9 items-center justify-center rounded-full bg-surface-2 text-muted">
-          <ArrowLeft size={20} />
-        </Link>
+        <BackButton fallback="/channels" />
         <h1 className="truncate text-lg font-bold text-foreground">{ch.name}</h1>
       </header>
 
@@ -70,7 +69,23 @@ export default function ChannelPage() {
         {ch.bio && <p className="mt-2 text-sm text-muted">{ch.bio}</p>}
       </div>
 
-      {ch.isMember ? (
+      {/* Shaxsiy xabar */}
+      <Link
+        href={`/chat/${ch.id}`}
+        className={cn(buttonVariants({ variant: "secondary", size: "md", block: true }), "mt-4")}
+      >
+        <MessageCircle size={17} /> Shaxsiy xabar yuborish
+      </Link>
+
+      {ch.banned ? (
+        <div className="mt-6 flex flex-col items-center gap-3 rounded-[var(--radius-lg)] border border-dashed border-danger/40 bg-surface p-6 text-center">
+          <span className="flex h-14 w-14 items-center justify-center rounded-full bg-danger/15 text-danger">
+            <Lock size={26} />
+          </span>
+          <p className="font-semibold text-foreground">Siz bu kanaldan bloklangansiz</p>
+          <p className="text-sm text-muted">Kanal egasi sizni bloklagan. Postlarni ko&apos;ra olmaysiz.</p>
+        </div>
+      ) : ch.isMember ? (
         <>
           <div className="mt-4 flex items-center gap-2 rounded-[var(--radius-md)] bg-accent-soft px-4 py-2.5 text-sm font-medium text-accent">
             <Check size={16} /> Siz bu kanalning a&apos;zosisiz

@@ -34,6 +34,12 @@ export interface DemoState {
   channelPosts: D.DemoChannelPost[];
   channelLikes: string[]; // `${userId}:${postId}`
   channelComments: { id: string; postId: string; userId: string; text: string; createdAt: string }[];
+  dmMessages: D.DemoDm[];
+  transactions: D.DemoTransaction[];
+  notifications: D.DemoNotification[];
+  profileOverrides: { userId: string; username?: string; privateMessagePrice?: number }[];
+  channelReactions: D.DemoChannelReaction[];
+  channelMemberStatus: D.DemoMemberStatus[];
   seq: number;
 }
 
@@ -58,6 +64,12 @@ export function initialState(): DemoState {
     channelPosts: D.CHANNEL_POSTS.map((p) => ({ ...p })),
     channelLikes: D.INITIAL_CHANNEL_LIKES.map((l) => `${l.userId}:${l.postId}`),
     channelComments: [],
+    dmMessages: D.DM_MESSAGES.map((m) => ({ ...m })),
+    transactions: D.TRANSACTIONS.map((t) => ({ ...t })),
+    notifications: D.NOTIFICATIONS.map((n) => ({ ...n })),
+    profileOverrides: [],
+    channelReactions: D.CHANNEL_REACTIONS.map((r) => ({ ...r })),
+    channelMemberStatus: D.CHANNEL_MEMBER_STATUS.map((m) => ({ ...m })),
     seq: 1,
   };
 }
@@ -86,6 +98,7 @@ export function publicUser(st: DemoState, id: string): PublicUser | null {
   const u = userById(st, id);
   if (!u) return null;
   const ov = st.onboarding.find((o) => o.userId === id);
+  const po = st.profileOverrides.find((p) => p.userId === id);
   return {
     id: u.id,
     name: u.name,
@@ -94,7 +107,21 @@ export function publicUser(st: DemoState, id: string): PublicUser | null {
     avatar: u.avatar,
     bio: ov?.bio ?? u.bio,
     category: ov?.category ?? u.category,
+    username: po?.username ?? u.username,
+    privateMessagePrice: po?.privateMessagePrice ?? u.privateMessagePrice,
   };
+}
+
+export function effectiveUsername(st: DemoState, id: string): string {
+  return st.profileOverrides.find((p) => p.userId === id)?.username ?? userById(st, id)?.username ?? "";
+}
+export function userByUsername(st: DemoState, username: string): D.DemoUser | undefined {
+  const clean = username.replace(/^@/, "").toLowerCase();
+  return st.users.find((u) => effectiveUsername(st, u.id).toLowerCase() === clean);
+}
+export function isUsernameTaken(st: DemoState, username: string, exceptUserId?: string): boolean {
+  const u = userByUsername(st, username);
+  return !!u && u.id !== exceptUserId;
 }
 
 export function currentUser(st: DemoState): PublicUser | null {
@@ -470,6 +497,38 @@ export function channelMemberCount(st: DemoState, sellerId: string): number {
   return set.size;
 }
 
+export function memberStatusOf(st: DemoState, sellerId: string, userId: string): D.MemberStatus | null {
+  return st.channelMemberStatus.find((m) => m.sellerId === sellerId && m.userId === userId)?.status ?? null;
+}
+export function isBanned(st: DemoState, sellerId: string, userId: string): boolean {
+  return memberStatusOf(st, sellerId, userId) === "banned";
+}
+
+export interface ChannelMemberRow {
+  userId: string;
+  name: string;
+  avatar: string | null;
+  username: string;
+  status: D.MemberStatus | "active";
+}
+/** Kanal a'zolari ro'yxati (egasi uchun — moderatsiya) */
+export function selectChannelMembers(st: DemoState, sellerId: string): ChannelMemberRow[] {
+  const ids = new Set<string>();
+  for (const p of st.purchases) {
+    if (courseById(st, p.courseId)?.sellerId === sellerId) ids.add(p.buyerId);
+  }
+  return [...ids].map((uid) => {
+    const u = userById(st, uid)!;
+    return {
+      userId: uid,
+      name: u.name,
+      avatar: u.avatar,
+      username: u.username,
+      status: memberStatusOf(st, sellerId, uid) ?? "active",
+    };
+  });
+}
+
 export interface ChannelSummary {
   id: string; // sellerId
   name: string;
@@ -482,19 +541,27 @@ export interface ChannelSummary {
   isMember: boolean;
 }
 
+export interface PostReactionView {
+  emoji: string;
+  count: number;
+  mine: boolean;
+}
 export interface ChannelPostView {
   id: string;
   sellerId: string;
   sellerName: string;
   sellerAvatar: string | null;
-  type: "text" | "video";
+  type: "text" | "image" | "video";
   text: string;
   videoUrl: string | null;
+  imageUrl: string | null;
   pinned: boolean;
+  edited: boolean;
+  deleted: boolean;
   createdAt: string;
-  likesCount: number;
-  likedByMe: boolean;
+  reactions: PostReactionView[];
   commentsCount: number;
+  canManage: boolean; // joriy foydalanuvchi kanal egasimi
 }
 
 function channelSummary(st: DemoState, seller: D.DemoUser, userId?: string): ChannelSummary {
@@ -512,21 +579,37 @@ function channelSummary(st: DemoState, seller: D.DemoUser, userId?: string): Cha
   };
 }
 
+function postReactions(st: DemoState, postId: string, userId?: string): PostReactionView[] {
+  const rs = st.channelReactions.filter((r) => r.postId === postId);
+  const byEmoji = new Map<string, { count: number; mine: boolean }>();
+  for (const r of rs) {
+    const cur = byEmoji.get(r.emoji) ?? { count: 0, mine: false };
+    cur.count += 1;
+    if (userId && r.userId === userId) cur.mine = true;
+    byEmoji.set(r.emoji, cur);
+  }
+  return [...byEmoji.entries()].map(([emoji, v]) => ({ emoji, count: v.count, mine: v.mine }));
+}
+
 function postView(st: DemoState, p: D.DemoChannelPost, userId?: string): ChannelPostView {
   const seller = userById(st, p.sellerId)!;
+  const deleted = !!p.deletedAt;
   return {
     id: p.id,
     sellerId: p.sellerId,
     sellerName: seller.name,
     sellerAvatar: seller.avatar,
     type: p.type,
-    text: p.text,
-    videoUrl: p.videoUrl,
-    pinned: p.pinned,
+    text: deleted ? "" : p.text,
+    videoUrl: deleted ? null : p.videoUrl,
+    imageUrl: deleted ? null : p.imageUrl ?? null,
+    pinned: p.pinned && !deleted,
+    edited: !!p.editedAt && !deleted,
+    deleted,
     createdAt: p.createdAt,
-    likesCount: p.likesCount,
-    likedByMe: !!userId && st.channelLikes.includes(`${userId}:${p.id}`),
+    reactions: deleted ? [] : postReactions(st, p.id, userId),
     commentsCount: st.channelComments.filter((c) => c.postId === p.id).length,
+    canManage: !!userId && userId === p.sellerId,
   };
 }
 
@@ -552,6 +635,7 @@ export function selectMyChannels(st: DemoState, userId: string): ChannelSummary[
 }
 
 export interface ChannelDetail extends ChannelSummary {
+  banned: boolean;
   posts: ChannelPostView[];
   courses: { id: string; title: string; price: number; coverImage: string | null }[];
 }
@@ -562,7 +646,7 @@ export function selectChannel(st: DemoState, sellerId: string, userId?: string):
   if (!seller || seller.role !== "SELLER") return null;
   const summary = channelSummary(st, seller, userId);
   const posts = st.channelPosts
-    .filter((p) => p.sellerId === sellerId)
+    .filter((p) => p.sellerId === sellerId && !p.deletedAt)
     .map((p) => postView(st, p, userId))
     .sort((a, b) => {
       if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
@@ -571,13 +655,13 @@ export function selectChannel(st: DemoState, sellerId: string, userId?: string):
   const courses = st.courses
     .filter((c) => c.sellerId === sellerId)
     .map((c) => ({ id: c.id, title: c.title, price: c.price, coverImage: c.coverImage }));
-  return { ...summary, posts, courses };
+  return { ...summary, banned: !!userId && isBanned(st, sellerId, userId), posts, courses };
 }
 
 /** "Mening kanallarim" birlashgan lentasi — a'zo kanallar postlari (eng yangisi tepada) */
 export function selectMyChannelFeed(st: DemoState, userId: string): ChannelPostView[] {
   return st.channelPosts
-    .filter((p) => isChannelMember(st, userId, p.sellerId))
+    .filter((p) => !p.deletedAt && isChannelMember(st, userId, p.sellerId) && !isBanned(st, p.sellerId, userId))
     .map((p) => postView(st, p, userId))
     .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
 }
@@ -602,7 +686,7 @@ export interface SellerChannelView {
 /** Sotuvchining o'z kanali (boshqaruv) */
 export function selectSellerChannel(st: DemoState, sellerId: string): SellerChannelView {
   const posts = st.channelPosts
-    .filter((p) => p.sellerId === sellerId)
+    .filter((p) => p.sellerId === sellerId && !p.deletedAt)
     .map((p) => postView(st, p, sellerId))
     .sort((a, b) => {
       if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
@@ -613,6 +697,183 @@ export function selectSellerChannel(st: DemoState, sellerId: string): SellerChan
     postsCount: posts.length,
     posts,
   };
+}
+
+// --- Shaxsiy xabarlar (DM) ---
+
+function sellerOf(st: DemoState, a: string, b: string): string {
+  if (userById(st, a)?.role === "SELLER") return a;
+  if (userById(st, b)?.role === "SELLER") return b;
+  return b;
+}
+/** Chat kaliti — har doim `${buyerId}__${sellerId}` */
+export function dmThreadKey(st: DemoState, a: string, b: string): string {
+  const seller = sellerOf(st, a, b);
+  const buyer = seller === a ? b : a;
+  return `${buyer}__${seller}`;
+}
+
+export interface DmMessageView {
+  id: string;
+  mine: boolean;
+  text: string;
+  imageUrl: string | null;
+  isPaid: boolean;
+  paidAmount: number;
+  read: boolean;
+  edited: boolean;
+  deleted: boolean;
+  createdAt: string;
+  replyTo: { senderName: string; text: string } | null;
+}
+export interface DmThreadView {
+  key: string;
+  buyerId: string;
+  sellerId: string;
+  partner: PublicUser | null;
+  meIsSeller: boolean;
+  messagePrice: number; // xaridor uchun bitta xabar narxi
+  messagingEnabled: boolean;
+  messages: DmMessageView[];
+}
+
+export function selectDmThread(st: DemoState, userId: string, partnerId: string): DmThreadView {
+  const key = dmThreadKey(st, userId, partnerId);
+  const [buyerId, sellerId] = key.split("__");
+  const seller = publicUser(st, sellerId);
+  const meIsSeller = userId === sellerId;
+  return {
+    key,
+    buyerId,
+    sellerId,
+    partner: publicUser(st, partnerId),
+    meIsSeller,
+    messagePrice: seller?.privateMessagePrice ?? 0,
+    messagingEnabled: meIsSeller || (seller?.privateMessagePrice ?? 0) > 0,
+    messages: st.dmMessages
+      .filter((m) => m.threadKey === key)
+      .sort((a, b) => (a.createdAt < b.createdAt ? -1 : 1))
+      .map((m) => {
+        const deleted = !!m.deletedAt;
+        const replied = m.replyToId ? st.dmMessages.find((x) => x.id === m.replyToId) : undefined;
+        return {
+          id: m.id,
+          mine: m.senderId === userId,
+          text: deleted ? "" : m.text,
+          imageUrl: deleted ? null : m.imageUrl ?? null,
+          isPaid: m.isPaid,
+          paidAmount: m.paidAmount,
+          read: m.read,
+          edited: !!m.editedAt && !deleted,
+          deleted,
+          createdAt: m.createdAt,
+          replyTo: replied
+            ? { senderName: userById(st, replied.senderId)?.name ?? "", text: replied.deletedAt ? "o'chirilgan xabar" : replied.text.slice(0, 60) }
+            : null,
+        };
+      }),
+  };
+}
+
+export interface DmThreadSummary {
+  key: string;
+  partnerId: string;
+  partner: PublicUser | null;
+  lastText: string;
+  lastAt: string;
+  unread: number;
+  meIsSeller: boolean;
+}
+
+export function selectMyDmThreads(st: DemoState, userId: string): DmThreadSummary[] {
+  const keys = new Set(
+    st.dmMessages.filter((m) => m.threadKey.split("__").includes(userId)).map((m) => m.threadKey)
+  );
+  return [...keys]
+    .map((key) => {
+      const [buyerId, sellerId] = key.split("__");
+      const partnerId = userId === buyerId ? sellerId : buyerId;
+      const msgs = st.dmMessages.filter((m) => m.threadKey === key).sort((a, b) => (a.createdAt < b.createdAt ? -1 : 1));
+      const last = msgs[msgs.length - 1];
+      return {
+        key,
+        partnerId,
+        partner: publicUser(st, partnerId),
+        lastText: last ? (last.deletedAt ? "🗑 o'chirilgan xabar" : last.imageUrl && !last.text ? "🖼 Rasm" : last.text) : "",
+        lastAt: last?.createdAt ?? "",
+        unread: msgs.filter((m) => m.senderId !== userId && !m.read).length,
+        meIsSeller: userId === sellerId,
+      };
+    })
+    .sort((a, b) => (a.lastAt < b.lastAt ? 1 : -1));
+}
+
+// --- Hamyon (Wallet) va tranzaksiyalar ---
+
+export interface TxView {
+  id: string;
+  type: D.TxType;
+  amount: number;
+  createdAt: string;
+  counterpartyName: string;
+}
+export interface WalletView {
+  total: number;
+  channel: number;
+  message: number;
+  tip: number;
+  transactions: TxView[];
+}
+
+export function selectSellerWallet(st: DemoState, sellerId: string): WalletView {
+  const txs = st.transactions.filter((t) => t.sellerId === sellerId);
+  const sumType = (types: D.TxType[]) =>
+    txs.filter((t) => types.includes(t.type)).reduce((s, t) => s + t.amount, 0);
+  return {
+    total: txs.reduce((s, t) => s + t.amount, 0),
+    channel: sumType(["channel_join", "course"]),
+    message: sumType(["private_message"]),
+    tip: sumType(["tip"]),
+    transactions: txs
+      .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
+      .map((t) => ({
+        id: t.id,
+        type: t.type,
+        amount: t.amount,
+        createdAt: t.createdAt,
+        counterpartyName: userById(st, t.userId)?.name ?? "Foydalanuvchi",
+      })),
+  };
+}
+
+export interface SpendingView {
+  total: number;
+  transactions: TxView[];
+}
+export function selectBuyerSpending(st: DemoState, userId: string): SpendingView {
+  const txs = st.transactions.filter((t) => t.userId === userId);
+  return {
+    total: txs.reduce((s, t) => s + t.amount, 0),
+    transactions: txs
+      .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
+      .map((t) => ({
+        id: t.id,
+        type: t.type,
+        amount: t.amount,
+        createdAt: t.createdAt,
+        counterpartyName: userById(st, t.sellerId)?.name ?? "Sotuvchi",
+      })),
+  };
+}
+
+// --- Bildirishnomalar ---
+export function selectNotifications(st: DemoState, userId: string): D.DemoNotification[] {
+  return st.notifications
+    .filter((n) => n.userId === userId)
+    .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+}
+export function unreadNotifCount(st: DemoState, userId: string): number {
+  return st.notifications.filter((n) => n.userId === userId && !n.read).length;
 }
 
 // --- Sana yordamchilari (streak uchun) ---

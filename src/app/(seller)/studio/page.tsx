@@ -48,6 +48,7 @@ export default function StudioPage() {
 
       <div>
         <p className="text-base font-bold text-foreground">{user.name}</p>
+        <p className="text-sm text-muted">@{user.username}</p>
         {user.category && (
           <span className="mt-1 inline-block rounded-full bg-accent-soft px-3 py-0.5 text-xs font-semibold text-accent">
             {user.category}

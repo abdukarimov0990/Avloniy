@@ -6,11 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { CATEGORIES } from "@/lib/constants";
 import { useDemo } from "@/lib/demo/use-demo";
+import { useToast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 
 export function OnboardingForm() {
   const router = useRouter();
   const setOnboarding = useDemo((s) => s.setOnboarding);
+  const toast = useToast((s) => s.show);
   const [category, setCategory] = useState<string>("");
   const [bio, setBio] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -22,11 +24,25 @@ export function OnboardingForm() {
       return;
     }
     setOnboarding(category, bio.trim() || null);
+    toast("Profil sozlandi 🎉");
+    router.replace("/dashboard");
+  }
+
+  function skip() {
+    setOnboarding("Boshqa", null);
+    toast("Profilni keyinroq Sozlamalarda to'ldirasiz");
     router.replace("/dashboard");
   }
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+      {/* Qadam ko'rsatkichi */}
+      <div className="flex items-center gap-2">
+        <span className="h-1.5 flex-1 rounded-full bg-accent" />
+        <span className="h-1.5 w-8 rounded-full bg-surface-2" />
+        <span className="text-xs font-medium text-subtle">1/2</span>
+      </div>
+
       <div>
         <Label>Yo&apos;nalishingiz qaysi?</Label>
         <div className="flex flex-wrap gap-2">
@@ -70,6 +86,9 @@ export function OnboardingForm() {
       <Button type="submit" size="lg" block>
         Davom etish
       </Button>
+      <button type="button" onClick={skip} className="-mt-2 text-center text-sm font-medium text-muted hover:text-foreground">
+        Keyinroq to&apos;ldirish
+      </button>
     </form>
   );
 }

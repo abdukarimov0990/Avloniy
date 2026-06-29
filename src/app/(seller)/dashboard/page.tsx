@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import {
   Wallet,
   ShoppingBag,
@@ -8,11 +9,15 @@ import {
   Heart,
   Clapperboard,
   TrendingUp,
+  MessageCircle,
+  Settings,
+  ChevronRight,
 } from "lucide-react";
 import { useDemo } from "@/lib/demo/use-demo";
-import { currentUser, selectSellerStats } from "@/lib/demo/state";
+import { currentUser, selectSellerStats, selectSellerWallet } from "@/lib/demo/state";
 import { Logo } from "@/components/brand/logo";
 import { LogoutButton } from "@/components/auth/logout-button";
+import { HeaderActions } from "@/components/layout/header-actions";
 import { RevenueChart } from "@/components/seller/revenue-chart";
 import { formatCompact, formatPrice } from "@/lib/utils";
 
@@ -52,12 +57,16 @@ export default function DashboardPage() {
   if (!user) return null;
 
   const stats = selectSellerStats(st, user.id);
+  const wallet = selectSellerWallet(st, user.id);
 
   return (
     <div className="px-5 pb-6">
       <header className="flex items-center justify-between py-5">
         <Logo />
-        <LogoutButton />
+        <div className="flex items-center gap-1">
+          <HeaderActions />
+          <LogoutButton />
+        </div>
       </header>
 
       <div className="mb-5">
@@ -72,6 +81,40 @@ export default function DashboardPage() {
         <StatCard icon={<ShoppingBag size={18} />} label="Sotuvlar" value={formatCompact(stats.totalSales)} />
         <StatCard icon={<Eye size={18} />} label="Kurs ko'rishlari" value={formatCompact(stats.totalViews)} />
         <StatCard icon={<BookOpen size={18} />} label="Kurslar" value={String(stats.totalCourses)} />
+      </div>
+
+      {/* Hamyon */}
+      <Link
+        href="/wallet"
+        className="mt-3 flex items-center gap-3 rounded-[var(--radius-lg)] border border-accent/40 bg-accent-soft p-4"
+      >
+        <span className="flex h-10 w-10 items-center justify-center rounded-full bg-accent text-white">
+          <Wallet size={20} />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="text-xs text-muted">Hamyon balansi</p>
+          <p className="truncate text-lg font-extrabold text-foreground">{formatPrice(wallet.total)}</p>
+        </div>
+        <ChevronRight size={20} className="text-accent" />
+      </Link>
+
+      {/* Xabar daromadi + sozlamalar */}
+      <div className="mt-3 grid grid-cols-2 gap-3">
+        <StatCard
+          icon={<MessageCircle size={18} />}
+          label="Shaxsiy xabar daromadi"
+          value={formatPrice(wallet.message)}
+        />
+        <Link
+          href="/settings"
+          className="flex flex-col justify-center rounded-[var(--radius-lg)] border border-border bg-surface p-4"
+        >
+          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-surface-2 text-accent">
+            <Settings size={18} />
+          </span>
+          <p className="mt-3 text-sm font-semibold text-foreground">Sozlamalar</p>
+          <p className="text-xs text-muted">Username, xabar narxi</p>
+        </Link>
       </div>
 
       {stats.topCourse && stats.topCourse.revenue > 0 && (

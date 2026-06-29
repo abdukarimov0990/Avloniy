@@ -82,6 +82,17 @@ Har bir sotuvchi = bitta **shaxsiy kanal**. Kursini sotib olgan avtomatik **a'zo
 - Komponentlar: `components/channel/` (`channel-post-card`, `channel-feed`, `channel-comments-sheet`, `post-composer`).
 - Kross-havola: kurs sahifasida sotuvchi → "Kanalni ochish".
 
+## Telegram-daraja kengaytma (client-only)
+- **Postlar:** matn/rasm/video (`PostComposer`), emoji reaksiya (`REACTION_EMOJIS`, `reactToPost`),
+  egasi uchun pin/tahrir/o'chirish (soft `deletedAt`), `channelReactions` selektorlari.
+- **DM (chat):** `/chat/[id]` — reply/tahrir/o'chirish, kun ajratgich, ✓/✓✓ (read), rasm, pullik
+  (xaridor to'laydi, sotuvchi javobi bepul). Amallar: `sendDm(opts)`, `editDm`, `deleteDm`, `markThreadRead`.
+- **Moderatsiya:** `/channel/members` — egasi a'zoni mute/ban qiladi (`channelMemberStatus`,
+  `setMemberStatus`); bloklangan a'zo kanalni ko'ra olmaydi.
+- **Eslatma:** haqiqiy WebSocket/ko'p-qurilma sinxron YO'Q (serversiz). "Real-time" = reaktiv
+  Zustand store + localStorage (shu brauzerda darhol, saqlanadi). `markThreadRead` faqat
+  o'qilmagan bor bo'lsa yangilaydi (cheksiz render'ni oldini olish).
+
 ## Kengaytirish schema (qo'shildi, additive)
 20+ yangi model BOSQICH 1–5 uchun (LessonProgress, Certificate, Quiz, QuizAttempt, Streak,
 SavedReel, Wishlist, PromoCode, Bundle, BundleCourse, Referral, Subscription, CoachingProduct,

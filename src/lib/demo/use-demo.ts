@@ -14,6 +14,10 @@ import {
   isPurchased,
   courseProgress,
   dayDiff,
+  dmThreadKey,
+  isUsernameTaken,
+  publicUser,
+  userById,
 } from "@/lib/demo/state";
 
 interface Actions {
@@ -36,14 +40,36 @@ interface Actions {
   createReel: (data: { courseId: string; caption?: string; videoUrl?: string }) => { id: string } | null;
   addQuiz: (lessonId: string, data: { question: string; options: string[]; correctOptionIndex: number }) => { ok: boolean } | null;
   setOnboarding: (category: string, bio: string | null) => void;
-  createChannelPost: (data: { type: "text" | "video"; text: string; videoUrl?: string }) => { id: string } | null;
-  toggleChannelPostLike: (postId: string) => void;
+  createChannelPost: (data: { type: "text" | "image" | "video"; text: string; mediaUrl?: string }) => { id: string } | null;
+  reactToPost: (postId: string, emoji: string) => void;
+  pinPost: (postId: string) => void;
+  editPost: (postId: string, text: string) => void;
+  deletePost: (postId: string) => void;
   addChannelComment: (postId: string, text: string) => FeedComment | null;
+  setUsername: (username: string) => { ok: boolean; error?: string };
+  setPrivateMessagePrice: (price: number) => void;
+  sendDm: (partnerId: string, text: string, opts?: { replyToId?: string; imageUrl?: string }) => { ok: boolean; error?: string; paid?: number };
+  editDm: (id: string, text: string) => void;
+  deleteDm: (id: string) => void;
+  markThreadRead: (partnerId: string) => void;
+  markNotificationsRead: () => void;
+  setMemberStatus: (sellerId: string, userId: string, status: "muted" | "banned" | null) => void;
 }
 
 type Store = DemoState & Actions;
 
 const nowISO = () => new Date().toISOString();
+
+/** Profil override massivini yangilaydi (username / xabar narxi) */
+function upsertOverride(
+  list: DemoState["profileOverrides"],
+  userId: string,
+  patch: { username?: string; privateMessagePrice?: number }
+): DemoState["profileOverrides"] {
+  const existing = list.find((o) => o.userId === userId);
+  if (existing) return list.map((o) => (o.userId === userId ? { ...o, ...patch } : o));
+  return [...list, { userId, ...patch }];
+}
 
 /** Streak massivini yangilaydi (yangi massiv qaytaradi) */
 function applyStreak(streaks: DemoState["streaks"], userId: string): DemoState["streaks"] {
@@ -77,9 +103,26 @@ export const useDemo = create<Store>()(
       },
 
       register: ({ name, email, password, role }) => {
-        if (findUserByEmail(get(), email)) return { ok: false, error: "Bu email allaqachon ro'yxatdan o'tgan" };
-        const id = `u-${get().seq}`;
-        const user: D.DemoUser = { id, name, email: email.toLowerCase(), password, role, avatar: null, bio: null, category: null };
+        const st0 = get();
+        if (findUserByEmail(st0, email)) return { ok: false, error: "Bu email allaqachon ro'yxatdan o'tgan" };
+        const id = `u-${st0.seq}`;
+        // Email prefiksidan unikal username yasaymiz
+        const base = email.toLowerCase().split("@")[0].replace(/[^a-z0-9_]/g, "") || "user";
+        let username = base;
+        let n = 1;
+        while (isUsernameTaken(st0, username)) username = `${base}${n++}`;
+        const user: D.DemoUser = {
+          id,
+          name,
+          email: email.toLowerCase(),
+          password,
+          role,
+          avatar: null,
+          bio: null,
+          category: null,
+          username,
+          privateMessagePrice: role === "SELLER" ? 10000 : 0,
+        };
         set((s) => ({ users: [...s.users, user], currentUserId: id, seq: s.seq + 1 }));
         return { ok: true };
       },
@@ -133,9 +176,22 @@ export const useDemo = create<Store>()(
         if (isPurchased(st, uid, courseId)) return { alreadyOwned: true };
         const course = courseById(st, courseId);
         if (!course) return { notFound: true };
+        const now = nowISO();
+        const buyerName = userById(st, uid)?.name ?? "Foydalanuvchi";
         set((s) => ({
-          purchases: [...s.purchases, { buyerId: uid, courseId, amountPaid: course.price, createdAt: nowISO() }],
+          purchases: [...s.purchases, { buyerId: uid, courseId, amountPaid: course.price, createdAt: now }],
           courses: s.courses.map((c) => (c.id === courseId ? { ...c, salesCount: c.salesCount + 1 } : c)),
+          // Pul oqimi: kanalga qo'shilish (= kurs sotib olish)
+          transactions: [
+            ...s.transactions,
+            { id: `tx-${s.seq}`, userId: uid, sellerId: course.sellerId, type: "channel_join" as D.TxType, amount: course.price, relatedId: courseId, createdAt: now },
+          ],
+          // Sotuvchiga "yangi a'zo" bildirishnomasi
+          notifications: [
+            ...s.notifications,
+            { id: `nt-${s.seq}`, userId: course.sellerId, type: "new_member" as D.NotifType, title: "Yangi a'zo", body: `${buyerName} "${course.title}" kanalingizga qo'shildi`, read: false, relatedId: courseId, createdAt: now },
+          ],
+          seq: s.seq + 1,
         }));
         return { ok: true };
       },
@@ -272,7 +328,10 @@ export const useDemo = create<Store>()(
           sellerId: uid,
           type: data.type,
           text: data.text,
-          videoUrl: data.type === "video" ? data.videoUrl || D.DEFAULT_VIDEO : null,
+          videoUrl: data.type === "video" ? data.mediaUrl || D.DEFAULT_VIDEO : null,
+          imageUrl: data.type === "image" ? data.mediaUrl || null : null,
+          editedAt: null,
+          deletedAt: null,
           pinned: false,
           likesCount: 0,
           createdAt: nowISO(),
@@ -281,19 +340,43 @@ export const useDemo = create<Store>()(
         return { id };
       },
 
-      toggleChannelPostLike: (postId) => {
+      reactToPost: (postId, emoji) => {
         const uid = get().currentUserId;
         if (!uid) return;
-        const key = `${uid}:${postId}`;
         set((s) => {
-          const has = s.channelLikes.includes(key);
-          return {
-            channelLikes: has ? s.channelLikes.filter((k) => k !== key) : [...s.channelLikes, key],
-            channelPosts: s.channelPosts.map((p) =>
-              p.id === postId ? { ...p, likesCount: Math.max(0, p.likesCount + (has ? -1 : 1)) } : p
-            ),
-          };
+          const mine = s.channelReactions.find((r) => r.postId === postId && r.userId === uid);
+          let next = s.channelReactions.filter((r) => !(r.postId === postId && r.userId === uid));
+          // Bir xil emoji bo'lsa — olib tashlash; aks holda almashtirish
+          if (!mine || mine.emoji !== emoji) next = [...next, { postId, userId: uid, emoji }];
+          return { channelReactions: next };
         });
+      },
+
+      pinPost: (postId) => {
+        const uid = get().currentUserId;
+        set((s) => ({
+          channelPosts: s.channelPosts.map((p) =>
+            p.id === postId && p.sellerId === uid ? { ...p, pinned: !p.pinned } : p
+          ),
+        }));
+      },
+
+      editPost: (postId, text) => {
+        const uid = get().currentUserId;
+        set((s) => ({
+          channelPosts: s.channelPosts.map((p) =>
+            p.id === postId && p.sellerId === uid ? { ...p, text, editedAt: nowISO() } : p
+          ),
+        }));
+      },
+
+      deletePost: (postId) => {
+        const uid = get().currentUserId;
+        set((s) => ({
+          channelPosts: s.channelPosts.map((p) =>
+            p.id === postId && p.sellerId === uid ? { ...p, deletedAt: nowISO() } : p
+          ),
+        }));
       },
 
       addChannelComment: (postId, text) => {
@@ -304,6 +387,134 @@ export const useDemo = create<Store>()(
         set((s) => ({ channelComments: [...s.channelComments, comment], seq: s.seq + 1 }));
         const u = get().users.find((x) => x.id === uid)!;
         return { id, text, createdAt: comment.createdAt, user: { id: u.id, name: u.name, avatar: u.avatar } };
+      },
+
+      setUsername: (username) => {
+        const uid = get().currentUserId;
+        if (!uid) return { ok: false, error: "Avval kiring" };
+        const clean = username.trim().replace(/^@/, "").toLowerCase();
+        if (!/^[a-z0-9_]{3,20}$/.test(clean)) {
+          return { ok: false, error: "Username 3-20 ta harf/raqam/_ bo'lsin" };
+        }
+        if (isUsernameTaken(get(), clean, uid)) {
+          return { ok: false, error: "Bu username band" };
+        }
+        set((s) => ({
+          profileOverrides: upsertOverride(s.profileOverrides, uid, { username: clean }),
+        }));
+        return { ok: true };
+      },
+
+      setPrivateMessagePrice: (price) => {
+        const uid = get().currentUserId;
+        if (!uid) return;
+        set((s) => ({
+          profileOverrides: upsertOverride(s.profileOverrides, uid, {
+            privateMessagePrice: Math.max(0, Math.round(price)),
+          }),
+        }));
+      },
+
+      sendDm: (partnerId, text, opts) => {
+        const uid = get().currentUserId;
+        if (!uid || (!text.trim() && !opts?.imageUrl)) return { ok: false, error: "Xato" };
+        const st = get();
+        const key = dmThreadKey(st, uid, partnerId);
+        const [buyerId, sellerId] = key.split("__");
+        const meIsSeller = uid === sellerId;
+        const seller = publicUser(st, sellerId);
+        const price = seller?.privateMessagePrice ?? 0;
+
+        if (!meIsSeller && price <= 0) {
+          return { ok: false, error: "Bu sotuvchi shaxsiy xabarni o'chirgan" };
+        }
+
+        const id = `dm-${st.seq}`;
+        const isPaid = !meIsSeller; // xaridor xabari pullik, sotuvchi javobi bepul
+        const paidAmount = isPaid ? price : 0;
+        const now = nowISO();
+        const receiverId = uid === buyerId ? sellerId : buyerId;
+
+        set((s) => {
+          const msg = { id, threadKey: key, senderId: uid, text: text.trim(), imageUrl: opts?.imageUrl ?? null, replyToId: opts?.replyToId ?? null, isPaid, paidAmount, read: false, editedAt: null, deletedAt: null, createdAt: now };
+          const updates: Partial<DemoState> = {
+            dmMessages: [...s.dmMessages, msg],
+            seq: s.seq + 1,
+          };
+          // Pullik xabar → tranzaksiya
+          if (isPaid) {
+            updates.transactions = [
+              ...s.transactions,
+              { id: `tx-${s.seq}`, userId: buyerId, sellerId, type: "private_message" as D.TxType, amount: paidAmount, relatedId: id, createdAt: now },
+            ];
+          }
+          // Qabul qiluvchiga bildirishnoma
+          const fromName = userById(s, uid)?.name ?? "Foydalanuvchi";
+          updates.notifications = [
+            ...s.notifications,
+            {
+              id: `nt-${s.seq}`,
+              userId: receiverId,
+              type: "new_message" as D.NotifType,
+              title: "Yangi shaxsiy xabar",
+              body: isPaid ? `${fromName} sizga xabar yubordi (${paidAmount.toLocaleString("ru-RU").replace(/,/g, " ")} so'm)` : `${fromName}: ${text.trim().slice(0, 40)}`,
+              read: false,
+              relatedId: key,
+              createdAt: now,
+            },
+          ];
+          return updates;
+        });
+        return { ok: true, paid: paidAmount };
+      },
+
+      editDm: (id, text) => {
+        const uid = get().currentUserId;
+        set((s) => ({
+          dmMessages: s.dmMessages.map((m) =>
+            m.id === id && m.senderId === uid && !m.deletedAt ? { ...m, text, editedAt: nowISO() } : m
+          ),
+        }));
+      },
+
+      deleteDm: (id) => {
+        const uid = get().currentUserId;
+        set((s) => ({
+          dmMessages: s.dmMessages.map((m) =>
+            m.id === id && m.senderId === uid ? { ...m, deletedAt: nowISO() } : m
+          ),
+        }));
+      },
+
+      setMemberStatus: (sellerId, userId, status) => {
+        const uid = get().currentUserId;
+        if (uid !== sellerId) return; // faqat kanal egasi
+        set((s) => {
+          const rest = s.channelMemberStatus.filter((m) => !(m.sellerId === sellerId && m.userId === userId));
+          return { channelMemberStatus: status ? [...rest, { sellerId, userId, status }] : rest };
+        });
+      },
+
+      markThreadRead: (partnerId) => {
+        const uid = get().currentUserId;
+        if (!uid) return;
+        const key = dmThreadKey(get(), uid, partnerId);
+        // Faqat o'qilmagan bor bo'lsa yangilaymiz (aks holda cheksiz render)
+        const hasUnread = get().dmMessages.some((m) => m.threadKey === key && m.senderId !== uid && !m.read);
+        if (!hasUnread) return;
+        set((s) => ({
+          dmMessages: s.dmMessages.map((m) =>
+            m.threadKey === key && m.senderId !== uid && !m.read ? { ...m, read: true } : m
+          ),
+        }));
+      },
+
+      markNotificationsRead: () => {
+        const uid = get().currentUserId;
+        if (!uid) return;
+        set((s) => ({
+          notifications: s.notifications.map((n) => (n.userId === uid ? { ...n, read: true } : n)),
+        }));
       },
     }),
     {

@@ -12,6 +12,7 @@ import {
 } from "@/lib/demo/state";
 import { CATEGORIES } from "@/lib/constants";
 import { ChannelFeed } from "@/components/channel/channel-feed";
+import { HeaderActions } from "@/components/layout/header-actions";
 import { cn, formatCompact } from "@/lib/utils";
 
 function ChannelCard({ ch }: { ch: ChannelSummary }) {
@@ -66,7 +67,10 @@ export default function ChannelsPage() {
 
   return (
     <div className="h-full overflow-y-auto px-5 pb-6">
-      <h1 className="py-5 text-xl font-bold text-foreground">Kanallar</h1>
+      <div className="flex items-center justify-between py-5">
+        <h1 className="text-xl font-bold text-foreground">Kanallar</h1>
+        <HeaderActions />
+      </div>
 
       {/* Qidiruv */}
       <div className="relative">

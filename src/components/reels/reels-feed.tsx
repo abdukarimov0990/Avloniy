@@ -5,16 +5,23 @@ import { ReelCard } from "@/components/reels/reel-card";
 import { CommentsSheet } from "@/components/reels/comments-sheet";
 import { useDemo } from "@/lib/demo/use-demo";
 import { currentUser, selectFeedReels } from "@/lib/demo/state";
+import { useToast } from "@/lib/toast";
 import type { FeedReel } from "@/types";
 
 export function ReelsFeed() {
   const st = useDemo();
   const user = currentUser(st);
   const reels = selectFeedReels(st, user?.id ?? undefined);
+  const toast = useToast((s) => s.show);
 
   const toggleLike = useDemo((s) => s.toggleLike);
-  const toggleSave = useDemo((s) => s.toggleSave);
+  const toggleSaveRaw = useDemo((s) => s.toggleSave);
   const incrementView = useDemo((s) => s.incrementView);
+  const toggleSave = (id: string) => {
+    const saved = !!user && st.saves.includes(`${user.id}:${id}`);
+    toggleSaveRaw(id);
+    toast(saved ? "Saqlovdan olib tashlandi" : "Saqlandi 🔖");
+  };
 
   const [activeId, setActiveId] = useState<string | null>(reels[0]?.id ?? null);
   const [commentsReelId, setCommentsReelId] = useState<string | null>(null);
