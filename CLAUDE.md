@@ -33,6 +33,13 @@ Tokenlar `globals.css` `@theme`da: `background`/`surface`/`surface-2`, `accent`/
 `foreground`/`muted`/`subtle`, `border`. `success`=accent, `danger`=mahogany oilasi (boshqa rang yo'q).
 Doimo dark mavzu. UI primitivlar: `src/components/ui/`.
 
+## UX
+- Pastki nav 5 bo'lim (buyer: Lenta/Kanallar/Xabarlar/Kurslarim/Profil; seller: Statistika/Kanal/Xabarlar/Yaratish/Profil),
+  Xabarlar'da o'qilmagan DM badge. Kontekstli ortga: `components/layout/back-button.tsx` (`router.back()` + fallback).
+- Global toast: `src/lib/toast.ts` (`useToast().show`) + `components/ui/toaster.tsx` (DemoProvider'да). Save/wishlist/sotib olish/post/sozlama/onboarding/moderatsiya'да ishlatiladi.
+- Qaytarib bo'lmaydigan harakatlar (chiqish, post/xabar o'chirish) — tasdiq oynasi bilan.
+- Onboarding: qadam ko'rsatkichi + "Keyinroq to'ldirish" (`category="Boshqa"`). Touch target ≥44px.
+
 ## Muhim konvensiyalar
 - Yangi selektor/amal qo'shsangiz: read → `state.ts`, write → `use-demo.ts` action.
 - `useDemo()`ни SELEKTORSIZ chaqiring (to'liq holat) — selektor yangi obyekt qaytarsa Zustand v5 loop beradi.
