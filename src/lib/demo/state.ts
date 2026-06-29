@@ -876,6 +876,102 @@ export function unreadNotifCount(st: DemoState, userId: string): number {
   return st.notifications.filter((n) => n.userId === userId && !n.read).length;
 }
 
+// --- Kashf qilish (Discover) ---
+
+export interface DiscoverCourse {
+  id: string;
+  title: string;
+  coverImage: string | null;
+  price: number;
+  category: string;
+  sellerId: string;
+  sellerName: string;
+  salesCount: number;
+}
+
+function toDiscover(st: DemoState, c: D.DemoCourse): DiscoverCourse {
+  return {
+    id: c.id,
+    title: c.title,
+    coverImage: c.coverImage,
+    price: c.price,
+    category: c.category,
+    sellerId: c.sellerId,
+    sellerName: userById(st, c.sellerId)?.name ?? "",
+    salesCount: c.salesCount,
+  };
+}
+
+/** Barcha kurslar (eng yangisi yoki sotuv bo'yicha) */
+export function selectAllCourses(st: DemoState): DiscoverCourse[] {
+  return st.courses.map((c) => toDiscover(st, c)).sort((a, b) => b.salesCount - a.salesCount);
+}
+
+/** Top kurslar — eng ko'p sotilganlari */
+export function selectTopCourses(st: DemoState, limit = 6): DiscoverCourse[] {
+  return [...st.courses]
+    .sort((a, b) => b.salesCount - a.salesCount)
+    .slice(0, limit)
+    .map((c) => toDiscover(st, c));
+}
+
+export interface CategoryRank {
+  category: string;
+  courseCount: number;
+  totalSales: number;
+}
+/** Kategoriyalar — mashhurligi (jami sotuvi) bo'yicha */
+export function selectCategoriesRanked(st: DemoState): CategoryRank[] {
+  const map = new Map<string, { courseCount: number; totalSales: number }>();
+  for (const c of st.courses) {
+    const cur = map.get(c.category) ?? { courseCount: 0, totalSales: 0 };
+    cur.courseCount += 1;
+    cur.totalSales += c.salesCount;
+    map.set(c.category, cur);
+  }
+  return [...map.entries()]
+    .map(([category, v]) => ({ category, ...v }))
+    .sort((a, b) => b.totalSales - a.totalSales);
+}
+
+/** Bitta kategoriyadagi kurslar (sotuv bo'yicha) */
+export function selectCoursesByCategory(st: DemoState, category: string): DiscoverCourse[] {
+  return st.courses
+    .filter((c) => c.category === category)
+    .map((c) => toDiscover(st, c))
+    .sort((a, b) => b.salesCount - a.salesCount);
+}
+
+export interface TopCreator {
+  id: string;
+  name: string;
+  avatar: string | null;
+  username: string;
+  category: string | null;
+  courseCount: number;
+  totalSales: number;
+}
+/** Top kreatorlar — jami sotuvi bo'yicha sotuvchilar */
+export function selectTopCreators(st: DemoState, limit = 6): TopCreator[] {
+  return st.users
+    .filter((u) => u.role === "SELLER")
+    .map((u) => {
+      const courses = st.courses.filter((c) => c.sellerId === u.id);
+      const pub = publicUser(st, u.id)!;
+      return {
+        id: u.id,
+        name: u.name,
+        avatar: u.avatar,
+        username: pub.username,
+        category: pub.category,
+        courseCount: courses.length,
+        totalSales: courses.reduce((s, c) => s + c.salesCount, 0),
+      };
+    })
+    .sort((a, b) => b.totalSales - a.totalSales)
+    .slice(0, limit);
+}
+
 // --- Sana yordamchilari (streak uchun) ---
 export function startOfDay(d: Date): Date {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate());

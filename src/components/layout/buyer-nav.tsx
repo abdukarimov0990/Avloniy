@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Clapperboard, Radio, Mail, GraduationCap, User } from "lucide-react";
+import { Clapperboard, Compass, Radio, Mail, GraduationCap, User } from "lucide-react";
 import { useDemo } from "@/lib/demo/use-demo";
 import { currentUser, selectMyDmThreads } from "@/lib/demo/state";
 import { cn } from "@/lib/utils";
 
 const ITEMS = [
   { href: "/feed", label: "Lenta", Icon: Clapperboard },
+  { href: "/discover", label: "Kashf", Icon: Compass },
   { href: "/channels", label: "Kanallar", Icon: Radio },
   { href: "/inbox", label: "Xabarlar", Icon: Mail, badge: true },
   { href: "/library", label: "Kurslarim", Icon: GraduationCap },

@@ -33,6 +33,12 @@ Tokenlar `globals.css` `@theme`da: `background`/`surface`/`surface-2`, `accent`/
 `foreground`/`muted`/`subtle`, `border`. `success`=accent, `danger`=mahogany oilasi (boshqa rang yo'q).
 Doimo dark mavzu. UI primitivlar: `src/components/ui/`.
 
+## Kashf qilish (Discover)
+Buyer nav'da **Kashf** tab (`/discover`): 🔥 Top kurslar (eng ko'p sotilgan + trend kategoriya),
+Kategoriyalar (mashhurlik bo'yicha → `/discover/[category]` alohida sahifa), Top kreatorlar
+(sotuv bo'yicha → kanal), Barcha kurslar (reyting bilan). Selektorlar `state.ts`:
+`selectTopCourses`, `selectCategoriesRanked`, `selectCoursesByCategory`, `selectTopCreators`, `selectAllCourses`.
+
 ## UX
 - Pastki nav 5 bo'lim (buyer: Lenta/Kanallar/Xabarlar/Kurslarim/Profil; seller: Statistika/Kanal/Xabarlar/Yaratish/Profil),
   Xabarlar'da o'qilmagan DM badge. Kontekstli ortga: `components/layout/back-button.tsx` (`router.back()` + fallback).
