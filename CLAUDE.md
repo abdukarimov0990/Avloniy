@@ -100,8 +100,17 @@ Har bir sotuvchi = bitta **shaxsiy kanal**. Kursini sotib olgan avtomatik **a'zo
 - Buyer: `/channels` (discovery — qidiruv + kategoriya + "mening kanallarim" lentasi),
   `/channels/[id]` (a'zo → postlar; a'zo emas → qulflangan + kurslar). Pastki navga "Kanallar" qo'shildi.
 - Seller: `/channel` (a'zolar/postlar statistikasi + `PostComposer` (matn/video post) + postlar). Navga "Kanal".
-- Komponentlar: `components/channel/` (`channel-post-card`, `channel-feed`, `channel-comments-sheet`, `post-composer`).
+- Komponentlar: `components/channel/` (`channel-post-card`, `channel-feed`, `channel-comments-sheet`, `channel-composer-bar`).
 - Kross-havola: kurs sahifasida sotuvchi → "Kanalni ochish".
+
+### Telegram uslubidagi UI (kanal ko'rinishi)
+Kanal sahifalari **Telegram messenger uslubida**: `h-full flex flex-col` — sticky **header** (avatar +
+nom + a'zolar soni + DM/menyu), o'rtada **chat scroll** (`.tg-chat` — nozik mahogany "wallpaper",
+`globals.css`), pastda **composer** (faqat seller). Postlar **chat bubble** (`channel-post-card`):
+chapga tekislangan (`rounded-2xl rounded-bl-md`), media tepada, matn+vaqt (soat:daqiqa), reaksiya pill'lari,
+"Izoh qoldirish" panel; egasi uchun ⋮ (pin/tahrir/o'chirish). Seller: `ChannelComposerBar` — pastki
+kirish paneli (📎 rasm/video + matn + yuborish, Enter=yuborish). Buyer a'zo: chat + tavsif kartasi;
+a'zo emas: qulflangan + kurslar. Demo xaridor `ali` `c-web` kursini sotib olgan (u-aziz kanaliga a'zo).
 
 ## Telegram-daraja kengaytma (client-only)
 - **Postlar:** matn/rasm/video (`PostComposer`), emoji reaksiya (`REACTION_EMOJIS`, `reactToPost`),

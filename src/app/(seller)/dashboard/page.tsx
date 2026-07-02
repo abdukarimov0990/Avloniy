@@ -12,14 +12,28 @@ import {
   MessageCircle,
   Settings,
   ChevronRight,
+  Receipt,
+  CreditCard,
+  CalendarClock,
 } from "lucide-react";
 import { useDemo } from "@/lib/demo/use-demo";
-import { currentUser, selectSellerStats, selectSellerWallet } from "@/lib/demo/state";
+import {
+  currentUser,
+  selectSellerStats,
+  selectSellerWallet,
+  selectSellerFinance,
+} from "@/lib/demo/state";
 import { Logo } from "@/components/brand/logo";
 import { LogoutButton } from "@/components/auth/logout-button";
 import { HeaderActions } from "@/components/layout/header-actions";
 import { RevenueChart } from "@/components/seller/revenue-chart";
 import { formatCompact, formatPrice } from "@/lib/utils";
+
+// "2026-07-10" → "10.07.2026"
+function formatDate(iso: string): string {
+  const [y, m, d] = iso.split("-");
+  return d && m && y ? `${d}.${m}.${y}` : iso;
+}
 
 function StatCard({
   icon,
@@ -58,6 +72,7 @@ export default function DashboardPage() {
 
   const stats = selectSellerStats(st, user.id);
   const wallet = selectSellerWallet(st, user.id);
+  const finance = selectSellerFinance(st, user.id);
 
   return (
     <div className="px-5 pb-6">
@@ -79,6 +94,8 @@ export default function DashboardPage() {
       <div className="grid grid-cols-2 gap-3">
         <StatCard icon={<Wallet size={18} />} label="Jami daromad" value={formatPrice(stats.totalRevenue)} accent />
         <StatCard icon={<ShoppingBag size={18} />} label="Sotuvlar" value={formatCompact(stats.totalSales)} />
+        <StatCard icon={<Receipt size={18} />} label="Xarajatlar" value={formatPrice(finance.totalExpenses)} />
+        <StatCard icon={<CreditCard size={18} />} label="Qarzlar" value={formatPrice(finance.totalDebts)} />
         <StatCard icon={<Eye size={18} />} label="Kurs ko'rishlari" value={formatCompact(stats.totalViews)} />
         <StatCard icon={<BookOpen size={18} />} label="Kurslar" value={String(stats.totalCourses)} />
       </div>
@@ -97,6 +114,33 @@ export default function DashboardPage() {
         </div>
         <ChevronRight size={20} className="text-accent" />
       </Link>
+
+      {/* Qarzlar ro'yxati — to'lanishi kerak bo'lgan summalar (mehmonxona, charter, ...) */}
+      {finance.debts.length > 0 && (
+        <section className="mt-3 rounded-[var(--radius-lg)] border border-border bg-surface p-4">
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="flex items-center gap-2 text-sm font-bold text-foreground">
+              <CreditCard size={16} className="text-accent" /> Qarzlar
+            </h2>
+            <span className="text-sm font-extrabold text-accent">{formatPrice(finance.totalDebts)}</span>
+          </div>
+          <ul className="flex flex-col gap-2.5">
+            {finance.debts.map((d) => (
+              <li key={d.id} className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium text-foreground">{d.title}</p>
+                  {d.dueDate && (
+                    <p className="mt-0.5 flex items-center gap-1 text-xs text-subtle">
+                      <CalendarClock size={12} /> To&apos;lov: {formatDate(d.dueDate)}
+                    </p>
+                  )}
+                </div>
+                <p className="shrink-0 text-sm font-bold text-foreground">{formatPrice(d.amount)}</p>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {/* Xabar daromadi + sozlamalar */}
       <div className="mt-3 grid grid-cols-2 gap-3">

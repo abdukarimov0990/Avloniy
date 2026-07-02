@@ -79,3 +79,12 @@ body {
 .animate-fade-up {
   animation: fade-up 0.3s ease-out both;
 }
+
+/* Telegram uslubidagi chat foni — nozik mahogany "wallpaper" (palitra: faqat mahogany + light-black) */
+.tg-chat {
+  background-color: #171717;
+  background-image:
+    radial-gradient(circle at 20% 15%, rgba(186, 61, 3, 0.07) 0, transparent 42%),
+    radial-gradient(circle at 85% 85%, rgba(186, 61, 3, 0.06) 0, transparent 45%),
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.012) 0, transparent 60%);
+}

@@ -120,7 +120,7 @@ export default function DiscoverPage() {
         <h2 className="mb-3 flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-subtle">
           <BookOpen size={15} /> Barcha kurslar ({all.length})
         </h2>
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
+        <div className="grid grid-cols-2 gap-3">
           {all.map((c) => (
             <MarketCard key={c.id} c={c} />
           ))}

@@ -1,11 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { Users, FileText, Radio, ChevronRight } from "lucide-react";
+import { Users } from "lucide-react";
 import { useDemo } from "@/lib/demo/use-demo";
 import { currentUser, selectSellerChannel } from "@/lib/demo/state";
-import { Logo } from "@/components/brand/logo";
-import { PostComposer } from "@/components/channel/post-composer";
+import { ChannelComposerBar } from "@/components/channel/channel-composer-bar";
 import { ChannelFeed } from "@/components/channel/channel-feed";
 import { formatCompact } from "@/lib/utils";
 
@@ -17,55 +16,43 @@ export default function SellerChannelPage() {
   const channel = selectSellerChannel(st, user.id);
 
   return (
-    <div className="px-5 pb-6">
-      <header className="flex items-center justify-between py-5">
-        <Logo />
-        <span className="flex items-center gap-1.5 rounded-full bg-accent-soft px-3 py-1 text-xs font-semibold text-accent">
-          <Radio size={13} /> Mening kanalim
-        </span>
+    <div className="flex h-full flex-col">
+      {/* Telegram uslubidagi sarlavha — kanal identifikatori + a'zolarni boshqarish */}
+      <header className="z-10 flex shrink-0 items-center gap-3 border-b border-border bg-surface px-3 py-2.5">
+        {user.avatar ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={user.avatar} alt={user.name} className="h-10 w-10 rounded-full object-cover" />
+        ) : (
+          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-accent text-base font-bold text-white">
+            {user.name.charAt(0)}
+          </span>
+        )}
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-[15px] font-bold text-foreground">{user.name}</p>
+          <p className="text-xs text-subtle">{channel.postsCount} post · mening kanalim</p>
+        </div>
+        <Link
+          href="/channel/members"
+          className="flex items-center gap-1.5 rounded-full bg-surface-2 px-3 py-1.5 text-xs font-semibold text-foreground transition hover:text-accent"
+        >
+          <Users size={15} /> {formatCompact(channel.membersCount)}
+        </Link>
       </header>
 
-      {/* Statistika */}
-      <div className="grid grid-cols-2 gap-3">
-        <Link href="/channel/members" className="rounded-[var(--radius-lg)] border border-border bg-surface p-4 transition active:scale-[0.99]">
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-surface-2 text-accent">
-            <Users size={18} />
-          </span>
-          <p className="mt-3 flex items-center gap-1 text-xl font-extrabold text-foreground">
-            {formatCompact(channel.membersCount)}
-            <ChevronRight size={16} className="text-subtle" />
-          </p>
-          <p className="text-xs text-muted">A&apos;zolar — boshqarish</p>
-        </Link>
-        <div className="rounded-[var(--radius-lg)] border border-border bg-surface p-4">
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-surface-2 text-accent">
-            <FileText size={18} />
-          </span>
-          <p className="mt-3 text-xl font-extrabold text-foreground">{channel.postsCount}</p>
-          <p className="text-xs text-muted">Postlar</p>
-        </div>
-      </div>
-
-      {/* Post yozish */}
-      <section className="mt-5">
-        <h2 className="mb-3 text-sm font-bold uppercase tracking-wide text-subtle">Yangi post</h2>
-        <PostComposer />
-      </section>
-
-      {/* Postlar */}
-      <section className="mt-6">
-        <h2 className="mb-3 text-sm font-bold uppercase tracking-wide text-subtle">
-          Kanal postlari ({channel.postsCount})
-        </h2>
+      {/* Postlar — chat */}
+      <div className="tg-chat flex-1 overflow-y-auto px-3 py-4">
         <ChannelFeed
           posts={channel.posts}
           empty={
-            <p className="rounded-[var(--radius-lg)] border border-border bg-surface p-4 text-center text-sm text-muted">
-              Hali post yo&apos;q. Birinchi postingizni yozing!
+            <p className="mx-auto w-fit rounded-full bg-surface/70 px-4 py-1.5 text-center text-sm text-subtle">
+              Hali post yo&apos;q. Birinchi postingizni yozing 👇
             </p>
           }
         />
-      </section>
+      </div>
+
+      {/* Yozish paneli */}
+      <ChannelComposerBar />
     </div>
   );
 }

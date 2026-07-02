@@ -40,6 +40,7 @@ export interface DemoState {
   profileOverrides: { userId: string; username?: string; privateMessagePrice?: number }[];
   channelReactions: D.DemoChannelReaction[];
   channelMemberStatus: D.DemoMemberStatus[];
+  financeItems: D.DemoFinanceItem[];
   seq: number;
 }
 
@@ -70,6 +71,7 @@ export function initialState(): DemoState {
     profileOverrides: [],
     channelReactions: D.CHANNEL_REACTIONS.map((r) => ({ ...r })),
     channelMemberStatus: D.CHANNEL_MEMBER_STATUS.map((m) => ({ ...m })),
+    financeItems: D.FINANCE_ITEMS.map((f) => ({ ...f })),
     seq: 1,
   };
 }
@@ -843,6 +845,44 @@ export function selectSellerWallet(st: DemoState, sellerId: string): WalletView 
         createdAt: t.createdAt,
         counterpartyName: userById(st, t.userId)?.name ?? "Foydalanuvchi",
       })),
+  };
+}
+
+// --- Moliya: xarajatlar va qarzlar ---
+export interface FinanceItemView {
+  id: string;
+  title: string;
+  amount: number;
+  dueDate: string | null;
+}
+export interface SellerFinance {
+  totalExpenses: number;
+  totalDebts: number;
+  expenses: FinanceItemView[];
+  debts: FinanceItemView[];
+}
+export function selectSellerFinance(st: DemoState, sellerId: string): SellerFinance {
+  const items = st.financeItems.filter((f) => f.sellerId === sellerId);
+  const toView = (f: D.DemoFinanceItem): FinanceItemView => ({
+    id: f.id,
+    title: f.title,
+    amount: f.amount,
+    dueDate: f.dueDate,
+  });
+  const expenses = items
+    .filter((f) => f.kind === "expense")
+    .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
+    .map(toView);
+  // Qarzlar — to'lov muddati yaqinligi bo'yicha (eng yaqin birinchi)
+  const debts = items
+    .filter((f) => f.kind === "debt")
+    .sort((a, b) => (a.dueDate ?? "9999").localeCompare(b.dueDate ?? "9999"))
+    .map(toView);
+  return {
+    totalExpenses: expenses.reduce((s, i) => s + i.amount, 0),
+    totalDebts: debts.reduce((s, i) => s + i.amount, 0),
+    expenses,
+    debts,
   };
 }
 

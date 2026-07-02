@@ -9,6 +9,24 @@ export type Role = "BUYER" | "SELLER";
 
 export const DEFAULT_VIDEO = "/videos/default.mp4";
 
+// Ta'lim mavzusidagi qisqa videolar (public/videos/) — reels, darslar va kanal postlarida ishlatiladi
+export const EDU_VIDEOS = {
+  coding: "/videos/coding.mp4",
+  webdev: "/videos/webdev.mp4",
+  react: "/videos/react.mp4",
+  study: "/videos/study.mp4",
+  student: "/videos/student.mp4",
+  online: "/videos/online.mp4",
+} as const;
+export const EDU_VIDEO_LIST: string[] = Object.values(EDU_VIDEOS);
+// Har bir kursning asosiy reel/dars videosi (mavzuga mos)
+export const COURSE_VIDEO: Record<string, string> = {
+  "c-web": EDU_VIDEOS.webdev,
+  "c-react": EDU_VIDEOS.react,
+  "c-figma": EDU_VIDEOS.study,
+  "c-insta": EDU_VIDEOS.online,
+};
+
 export interface DemoUser {
   id: string;
   name: string;
@@ -199,12 +217,13 @@ const LESSON_TITLES: Record<string, string[]> = {
   "c-insta": ["Profil sozlash", "Kontent reja", "Reels sirlari", "Reklama"],
 };
 
-export const LESSONS: DemoLesson[] = COURSES.flatMap((c) =>
+export const LESSONS: DemoLesson[] = COURSES.flatMap((c, ci) =>
   LESSON_TITLES[c.id].map((title, i) => ({
     id: `l-${c.id}-${i + 1}`,
     courseId: c.id,
     title,
-    videoUrl: DEFAULT_VIDEO,
+    // Ta'lim videolari orasidan aylantirib beriladi (har dars uchun xilma-xil)
+    videoUrl: EDU_VIDEO_LIST[(ci * 4 + i) % EDU_VIDEO_LIST.length],
     content: "Dars materiali tez orada qo'shiladi.",
     order: i + 1,
     isFreePreview: i === 0,
@@ -230,7 +249,7 @@ export const REELS: DemoReel[] = COURSES.map((c, i) => ({
   id: `r-${c.id}`,
   sellerId: c.sellerId,
   courseId: c.id,
-  videoUrl: DEFAULT_VIDEO,
+  videoUrl: COURSE_VIDEO[c.id] ?? DEFAULT_VIDEO,
   caption: REEL_CAPTIONS[c.id],
   hashtags: c.hashtags,
   likesCount: 50 + i * 17,
@@ -246,6 +265,8 @@ export const COMMENTS: DemoComment[] = [
 
 // Statistika uchun dastlabki sotuvlar (seller dashboard'lari bo'sh ko'rinmasligi uchun)
 export const PURCHASES: DemoPurchase[] = [
+  // Demo xaridor (ali) — u-aziz kanaliga a'zo bo'lishi uchun (kanal funksiyasini ko'rsatadi)
+  { buyerId: "u-ali", courseId: "c-web", amountPaid: 199000, createdAt: "2026-06-13T09:00:00.000Z" },
   { buyerId: "u-g1", courseId: "c-web", amountPaid: 199000, createdAt: "2026-06-10T10:00:00.000Z" },
   { buyerId: "u-g2", courseId: "c-web", amountPaid: 199000, createdAt: "2026-06-11T10:00:00.000Z" },
   { buyerId: "u-g3", courseId: "c-web", amountPaid: 199000, createdAt: "2026-06-12T10:00:00.000Z" },
@@ -282,7 +303,7 @@ export interface DemoChannelPost {
 }
 
 export const CHANNEL_POSTS: DemoChannelPost[] = [
-  // Aziz — Dasturlash kanali
+  // ===== Aziz — Dasturlash kanali =====
   {
     id: "cp-aziz-1",
     sellerId: "u-aziz",
@@ -296,24 +317,77 @@ export const CHANNEL_POSTS: DemoChannelPost[] = [
   {
     id: "cp-aziz-2",
     sellerId: "u-aziz",
-    type: "video",
-    text: "Bonus dars: VS Code'ni dasturchi uchun sozlash 🛠️ (faqat kanal a'zolari uchun)",
-    videoUrl: DEFAULT_VIDEO,
+    type: "image",
+    text: "📚 Web dasturchi bo'lish yo'l xaritasi (2026): HTML → CSS → JavaScript → React → Backend. Har bosqichni amaliyot bilan mustahkamlang!",
+    videoUrl: null,
+    imageUrl: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=800",
     pinned: false,
-    likesCount: 28,
-    createdAt: "2026-06-18T10:30:00.000Z",
+    likesCount: 51,
+    createdAt: "2026-06-17T09:30:00.000Z",
   },
   {
     id: "cp-aziz-3",
     sellerId: "u-aziz",
+    type: "video",
+    text: "🛠️ Bonus dars: VS Code'ni dasturchi uchun sozlash — foydali kengaytmalar va tezkor tugmalar (faqat kanal a'zolari uchun)",
+    videoUrl: EDU_VIDEOS.coding,
+    pinned: false,
+    likesCount: 38,
+    createdAt: "2026-06-18T10:30:00.000Z",
+  },
+  {
+    id: "cp-aziz-4",
+    sellerId: "u-aziz",
     type: "text",
-    text: "Ertaga soat 20:00 da jonli efirda React savollariga javob beraman. Savollaringizni izohga yozib qoldiring! 💬",
+    text: "💡 Bugungi maslahat: har kuni kamida 1 soat kod yozing. Muntazamlik iste'doddan muhimroq. Bugun nima o'rgandingiz? 👇",
     videoUrl: null,
     pinned: false,
-    likesCount: 17,
-    createdAt: "2026-06-20T15:00:00.000Z",
+    likesCount: 29,
+    createdAt: "2026-06-19T08:00:00.000Z",
   },
-  // Dilnoza — Dizayn kanali
+  {
+    id: "cp-aziz-5",
+    sellerId: "u-aziz",
+    type: "video",
+    text: "⚛️ React darsidan parcha: useState hook'ini 5 daqiqada tushunib oling. To'liq versiyasi kursda!",
+    videoUrl: EDU_VIDEOS.react,
+    pinned: false,
+    likesCount: 44,
+    createdAt: "2026-06-20T14:00:00.000Z",
+  },
+  {
+    id: "cp-aziz-6",
+    sellerId: "u-aziz",
+    type: "text",
+    text: "🎯 Haftalik topshiriq: oddiy \"To-Do List\" ilovasini HTML/CSS/JS'da yozing. Natijangizni izohda ulashing — eng yaxshisiga bepul konsultatsiya! 🏆",
+    videoUrl: null,
+    pinned: false,
+    likesCount: 33,
+    createdAt: "2026-06-22T11:00:00.000Z",
+  },
+  {
+    id: "cp-aziz-7",
+    sellerId: "u-aziz",
+    type: "text",
+    text: "📢 Ertaga soat 20:00 da jonli efirda React savollariga javob beraman. Savollaringizni izohga yozib qoldiring! 💬",
+    videoUrl: null,
+    pinned: false,
+    likesCount: 26,
+    createdAt: "2026-06-24T15:00:00.000Z",
+  },
+  {
+    id: "cp-aziz-8",
+    sellerId: "u-aziz",
+    type: "image",
+    text: "🔥 Yangi loyiha g'oyasi: shaxsiy portfolio sayti. Ish beruvchiga ko'rsatadigan birinchi narsangiz shu bo'ladi!",
+    videoUrl: null,
+    imageUrl: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800",
+    pinned: false,
+    likesCount: 47,
+    createdAt: "2026-06-27T10:00:00.000Z",
+  },
+
+  // ===== Dilnoza — Dizayn kanali =====
   {
     id: "cp-dilnoza-1",
     sellerId: "u-dilnoza",
@@ -327,14 +401,47 @@ export const CHANNEL_POSTS: DemoChannelPost[] = [
   {
     id: "cp-dilnoza-2",
     sellerId: "u-dilnoza",
-    type: "video",
-    text: "Tezkor maslahat: 8pt grid tizimi bilan ishlash 📐",
-    videoUrl: DEFAULT_VIDEO,
+    type: "image",
+    text: "🎨 Rang nazariyasi 101: uyg'un palitra tanlashning eng oson yo'li — 60/30/10 qoidasi. Asosiy, ikkilamchi va urg'u ranglar.",
+    videoUrl: null,
+    imageUrl: "https://images.unsplash.com/photo-1545235617-9465d2a55698?w=800",
     pinned: false,
-    likesCount: 21,
-    createdAt: "2026-06-19T12:00:00.000Z",
+    likesCount: 40,
+    createdAt: "2026-06-18T11:00:00.000Z",
   },
-  // Sardor — Marketing kanali
+  {
+    id: "cp-dilnoza-3",
+    sellerId: "u-dilnoza",
+    type: "video",
+    text: "📐 Tezkor dars: 8pt grid tizimi bilan interfeysni tartibli qilish. Har bir masofa 8ga karrali bo'lsin!",
+    videoUrl: EDU_VIDEOS.study,
+    pinned: false,
+    likesCount: 27,
+    createdAt: "2026-06-21T12:00:00.000Z",
+  },
+  {
+    id: "cp-dilnoza-4",
+    sellerId: "u-dilnoza",
+    type: "text",
+    text: "🎁 Bepul shablon: mobil ilova uchun 12 ta tayyor UI ekran. Figma havolasini a'zolarga DM orqali yuboraman — yozing!",
+    videoUrl: null,
+    pinned: false,
+    likesCount: 52,
+    createdAt: "2026-06-25T09:30:00.000Z",
+  },
+  {
+    id: "cp-dilnoza-5",
+    sellerId: "u-dilnoza",
+    type: "image",
+    text: "✨ Yaxshi dizayn = ko'rinmas dizayn. Foydalanuvchi o'ylamasdan ishlata olsa — muvaffaqiyat. Sizningcha eng yaxshi ilova qaysi?",
+    videoUrl: null,
+    imageUrl: "https://images.unsplash.com/photo-1561070791-2526d30994b5?w=800",
+    pinned: false,
+    likesCount: 31,
+    createdAt: "2026-06-28T14:00:00.000Z",
+  },
+
+  // ===== Sardor — Marketing kanali =====
   {
     id: "cp-sardor-1",
     sellerId: "u-sardor",
@@ -348,12 +455,43 @@ export const CHANNEL_POSTS: DemoChannelPost[] = [
   {
     id: "cp-sardor-2",
     sellerId: "u-sardor",
+    type: "image",
+    text: "📊 Kontent rejasi = barqaror o'sish. Haftaga kamida 3 ta post + 5 ta Reels. Rejalashtirmaganlar tasodifga tayanadi.",
+    videoUrl: null,
+    imageUrl: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800",
+    pinned: false,
+    likesCount: 28,
+    createdAt: "2026-06-19T10:00:00.000Z",
+  },
+  {
+    id: "cp-sardor-3",
+    sellerId: "u-sardor",
+    type: "video",
+    text: "🎬 Reels sirlari: birinchi 3 soniyada tomoshabinni ushlab qoling. Ilib qoluvchi \"hook\" — hammasidan muhim!",
+    videoUrl: EDU_VIDEOS.online,
+    pinned: false,
+    likesCount: 36,
+    createdAt: "2026-06-22T13:00:00.000Z",
+  },
+  {
+    id: "cp-sardor-4",
+    sellerId: "u-sardor",
     type: "text",
-    text: "Yangi case study: 0 dan 10 000 followergacha 30 kunda. To'liq strategiya keyingi postda! 🚀",
+    text: "🚀 Case study: 0 dan 10 000 followergacha 30 kunda. To'liq strategiya — trend audio, muntazamlik va aniq nishon auditoriya. Batafsil savollar izohda!",
     videoUrl: null,
     pinned: false,
-    likesCount: 24,
-    createdAt: "2026-06-20T16:00:00.000Z",
+    likesCount: 41,
+    createdAt: "2026-06-26T16:00:00.000Z",
+  },
+  {
+    id: "cp-sardor-5",
+    sellerId: "u-sardor",
+    type: "text",
+    text: "💰 Sotuvni oshiradigan 3 so'z: \"cheklangan\", \"bepul\", \"bugun\". Lekin faqat rost bo'lsa ishlatiladi — ishonch hammasidan qimmat.",
+    videoUrl: null,
+    pinned: false,
+    likesCount: 22,
+    createdAt: "2026-06-29T09:00:00.000Z",
   },
 ];
 
@@ -384,10 +522,28 @@ export interface DemoChannelReaction {
   emoji: string;
 }
 export const CHANNEL_REACTIONS: DemoChannelReaction[] = [
+  // Aziz kanali
+  { postId: "cp-aziz-1", userId: "u-ali", emoji: "🎉" },
   { postId: "cp-aziz-1", userId: "u-g1", emoji: "🔥" },
   { postId: "cp-aziz-1", userId: "u-g2", emoji: "👍" },
-  { postId: "cp-aziz-2", userId: "u-g1", emoji: "❤️" },
+  { postId: "cp-aziz-2", userId: "u-ali", emoji: "🔥" },
+  { postId: "cp-aziz-2", userId: "u-g1", emoji: "👍" },
+  { postId: "cp-aziz-3", userId: "u-g1", emoji: "❤️" },
+  { postId: "cp-aziz-3", userId: "u-g2", emoji: "🔥" },
+  { postId: "cp-aziz-5", userId: "u-ali", emoji: "❤️" },
+  { postId: "cp-aziz-5", userId: "u-g3", emoji: "😮" },
+  { postId: "cp-aziz-6", userId: "u-g2", emoji: "👏" },
+  { postId: "cp-aziz-8", userId: "u-ali", emoji: "🔥" },
+  // Dilnoza kanali
   { postId: "cp-dilnoza-1", userId: "u-g3", emoji: "👏" },
+  { postId: "cp-dilnoza-2", userId: "u-g1", emoji: "❤️" },
+  { postId: "cp-dilnoza-3", userId: "u-g3", emoji: "🔥" },
+  { postId: "cp-dilnoza-4", userId: "u-g1", emoji: "🎉" },
+  { postId: "cp-dilnoza-4", userId: "u-g3", emoji: "❤️" },
+  // Sardor kanali
+  { postId: "cp-sardor-1", userId: "u-g2", emoji: "👍" },
+  { postId: "cp-sardor-3", userId: "u-g3", emoji: "🔥" },
+  { postId: "cp-sardor-4", userId: "u-g2", emoji: "👏" },
 ];
 
 export type MemberStatus = "muted" | "banned";
@@ -431,6 +587,35 @@ export const TRANSACTIONS: DemoTransaction[] = [
   })),
   { id: "tx-dm-1", userId: "u-ali", sellerId: "u-aziz", type: "private_message", amount: 15000, relatedId: "dm-1", createdAt: "2026-06-19T10:00:00.000Z" },
   { id: "tx-dm-3", userId: "u-g1", sellerId: "u-aziz", type: "private_message", amount: 15000, relatedId: "dm-3", createdAt: "2026-06-20T14:00:00.000Z" },
+];
+
+// --- Moliya: xarajatlar va qarzlar (sotuvchi biznesi) ---
+// kind="expense" — allaqachon sarflangan; kind="debt" — to'lanishi kerak bo'lgan summa (muddat bilan).
+export type FinanceKind = "expense" | "debt";
+export interface DemoFinanceItem {
+  id: string;
+  sellerId: string;
+  kind: FinanceKind;
+  title: string;
+  amount: number;
+  dueDate: string | null; // faqat qarzlar uchun to'lov muddati
+  createdAt: string;
+}
+
+export const FINANCE_ITEMS: DemoFinanceItem[] = [
+  // u-aziz — xarajatlar
+  { id: "fin-e1", sellerId: "u-aziz", kind: "expense", title: "Reklama (targeting)", amount: 850000, dueDate: null, createdAt: "2026-06-10T09:00:00.000Z" },
+  { id: "fin-e2", sellerId: "u-aziz", kind: "expense", title: "Video montaj va studiya", amount: 1200000, dueDate: null, createdAt: "2026-06-14T09:00:00.000Z" },
+  { id: "fin-e3", sellerId: "u-aziz", kind: "expense", title: "Platforma komissiyasi", amount: 450000, dueDate: null, createdAt: "2026-06-20T09:00:00.000Z" },
+  // u-aziz — qarzlar (to'lanishi kerak)
+  { id: "fin-d1", sellerId: "u-aziz", kind: "debt", title: "Mehmonxona to'lovi", amount: 4500000, dueDate: "2026-07-10", createdAt: "2026-06-22T09:00:00.000Z" },
+  { id: "fin-d2", sellerId: "u-aziz", kind: "debt", title: "Charter parvoz", amount: 8200000, dueDate: "2026-07-05", createdAt: "2026-06-23T09:00:00.000Z" },
+  { id: "fin-d3", sellerId: "u-aziz", kind: "debt", title: "Transport xizmati", amount: 1300000, dueDate: "2026-07-15", createdAt: "2026-06-25T09:00:00.000Z" },
+  // u-dilnoza
+  { id: "fin-e4", sellerId: "u-dilnoza", kind: "expense", title: "Dizayn vositalari (litsenziya)", amount: 600000, dueDate: null, createdAt: "2026-06-12T09:00:00.000Z" },
+  { id: "fin-d4", sellerId: "u-dilnoza", kind: "debt", title: "Mehmonxona to'lovi", amount: 2800000, dueDate: "2026-07-12", createdAt: "2026-06-24T09:00:00.000Z" },
+  // u-sardor
+  { id: "fin-e5", sellerId: "u-sardor", kind: "expense", title: "Reklama", amount: 350000, dueDate: null, createdAt: "2026-06-18T09:00:00.000Z" },
 ];
 
 // --- Bildirishnomalar ---

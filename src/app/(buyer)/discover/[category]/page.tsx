@@ -39,7 +39,7 @@ export default function CategoryPage() {
       ) : (
         <>
           <p className="mb-3 text-sm text-muted">{courses.length} ta kurs — eng ko&apos;p sotilgani tepada</p>
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
+          <div className="grid grid-cols-2 gap-3">
             {courses.map((c) => (
               <MarketCard key={c.id} c={c} />
             ))}

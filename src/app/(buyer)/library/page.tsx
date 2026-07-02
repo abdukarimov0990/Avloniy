@@ -35,7 +35,7 @@ export default function LibraryPage() {
           </Link>
         </div>
       ) : (
-        <div className="grid gap-3 lg:grid-cols-2">
+        <div className="grid gap-3">
           {courses.map((course) => (
             <Link
               key={course.id}
