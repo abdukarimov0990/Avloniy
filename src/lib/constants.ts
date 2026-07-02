@@ -1,5 +1,5 @@
-/** Reels uchun standart video (ta'lim mavzusida) */
-export const DEFAULT_REEL_VIDEO = "/videos/coding.mp4";
+/** Reels uchun standart video */
+export const DEFAULT_REEL_VIDEO = "/videos/demo.mp4";
 
 /** Sotuvchi yo'nalishlari (onboarding va kurs kategoriyalari uchun) */
 export const CATEGORIES = [

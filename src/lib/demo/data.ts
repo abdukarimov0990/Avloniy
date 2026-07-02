@@ -7,16 +7,17 @@
 
 export type Role = "BUYER" | "SELLER";
 
-export const DEFAULT_VIDEO = "/videos/default.mp4";
+// Barcha video kontent uchun yagona standart video (reels, darslar, kanal postlari)
+export const DEFAULT_VIDEO = "/videos/demo.mp4";
 
-// Ta'lim mavzusidagi qisqa videolar (public/videos/) — reels, darslar va kanal postlarida ishlatiladi
+// Hammasi bitta demo videoga yo'naltirilgan (kalitlar mavjud kod bilan mos qolishi uchun saqlangan)
 export const EDU_VIDEOS = {
-  coding: "/videos/coding.mp4",
-  webdev: "/videos/webdev.mp4",
-  react: "/videos/react.mp4",
-  study: "/videos/study.mp4",
-  student: "/videos/student.mp4",
-  online: "/videos/online.mp4",
+  coding: DEFAULT_VIDEO,
+  webdev: DEFAULT_VIDEO,
+  react: DEFAULT_VIDEO,
+  study: DEFAULT_VIDEO,
+  student: DEFAULT_VIDEO,
+  online: DEFAULT_VIDEO,
 } as const;
 export const EDU_VIDEO_LIST: string[] = Object.values(EDU_VIDEOS);
 // Har bir kursning asosiy reel/dars videosi (mavzuga mos)
